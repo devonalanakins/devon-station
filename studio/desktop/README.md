@@ -27,7 +27,7 @@ npm run plugins
 npm start -- --workspace=/absolute/path/to/devon-station --project=devon-station --port=3100
 ```
 
-Open **http://127.0.0.1:3100** on the same trusted machine. The selected repository must have an exact approved origin of the form `https://github.com/devonalanakins/devon-station.git` or another mapping in `studio/src/projects.mjs`. Use `Ctrl+C` to stop the local process. No permanent service is installed.
+Open the **workspace-specific loopback URL printed by the launcher** (of the form `http://127.0.0.1:3100/#/absolute/git/repo`) on the same trusted machine. The bare port URL may show an empty workbench because Theia selects the initial workspace from its URL fragment. The selected repository must have an exact approved origin of the form `https://github.com/devonalanakins/devon-station.git` or another mapping in `studio/src/projects.mjs`. Use `Ctrl+C` to stop the local process. No permanent service is installed.
 
 Theia 1.76.0 is pinned; **Node 22 is not compatible with this Theia release**. Its dependencies carry upstream EPL-2.0 / GPL-2.0-with-Classpath-Exception licenses and retain their own notices. No OpenAI API, paid inference, or external development host is provisioned.
 
