@@ -74,7 +74,7 @@ export function launchDesktop(argv = process.argv.slice(2)) {
   const command = desktopCommand(options);
   if (!allowCI) {
     process.stdout.write('DevonStation Studio: private local Theia workbench\n');
-    process.stdout.write('http://127.0.0.1:' + options.port + '\n');
+    process.stdout.write('http://127.0.0.1:' + options.port + '/#' + encodeURI(verifyDesktopWorkspace(options.workspace, options.project)) + '\n');
     process.stdout.write('Editing and terminals use your operating-system permissions; NOT a remote sandbox.\n');
     process.stdout.write('No AI billing or public activity reporting is connected.\n');
   }
