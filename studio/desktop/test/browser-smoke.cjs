@@ -34,6 +34,13 @@ async function main() {
   writeFileSync(file,'export const answer = 41;\n');
   execFileSync('git',['init','-q',root]);
   execFileSync('git',['-C',root,'remote','add','origin','https://github.com/devonalanakins/devon-station.git']);
+  // Test a real, committed, approved Git workspace so Verify has meaningful HEAD evidence.
+  mkdirSync(join(root,'studio','test'),{recursive:true});
+  writeFileSync(join(root,'studio','test','local-host.test.mjs'),
+    "import { test } from 'node:test'; import assert from 'node:assert/strict'; test('synthetic accepted source',()=>assert.equal(1,1));\n");
+  execFileSync('git',['-C',root,'add','.']);
+  execFileSync('git',['-C',root,'-c','user.name=Studio CI','-c','user.email=studio@example.invalid',
+    'commit','-qm','synthetic browser fixture']);
   const port=await freePort();
   const url='http://127.0.0.1:'+port;
   const logs=[];
@@ -101,8 +108,14 @@ async function main() {
     await page.reload();
     await page.locator('.theia-ApplicationShell').waitFor({timeout:45000});
     assert.equal(readFileSync(file,'utf8'),'export const answer = 42;');
+    // The installed native Studio extension invokes real local Node and Git commands.
+    const verifyButton=page.getByText('Verify Local',{exact:false}).last();
+    await verifyButton.waitFor({timeout:90000});
+    await verifyButton.click();
+    await page.getByText('Local checks passed',{exact:false}).last().waitFor({timeout:90000});
     assert.deepEqual(errors,[]);
     process.stdout.write(JSON.stringify({theiaLoaded:true,realFileEdited:true,persistedAfterReload:true,
+      localVerificationObserved:true,
       project:'devon-station',publicPublishing:false,providerCalls:0})+'\n');
   } catch(error) {
     process.stderr.write('Theia smoke failed: '+error.stack+'\n'+logs.join('').slice(-7000)+'\n');
