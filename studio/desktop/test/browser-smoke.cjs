@@ -53,7 +53,7 @@ async function main() {
     const page=await browser.newPage({viewport:{width:1440,height:900}});
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
-    const response=await page.goto(url,{waitUntil:'domcontentloaded'});
+    const response=await page.goto(url+'/#'+encodeURI(root),{waitUntil:'domcontentloaded'});
     assert.equal(response.status(),200);
     await page.locator('.theia-ApplicationShell').waitFor({timeout:90000});
     // Theia can delay plugin/workspace restoration beyond shell readiness.
