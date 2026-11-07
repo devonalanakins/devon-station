@@ -1,0 +1,44 @@
+name: DS011 Studio writable Theia desktop review
+on:
+  pull_request:
+    paths:
+      - 'studio/desktop/**'
+      - '.github/workflows/studio-desktop-review.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ds011-studio-desktop-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  theia-real-editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Verify checked-out exact PR head
+        env:
+          EXPECTED_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_COMMIT"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Verify private workbench launcher
+        run: node --test studio/desktop/test/launcher.test.mjs
+      - name: Install isolated Theia dependencies
+        run: npm install --prefix studio/desktop --no-audit --no-fund
+      - name: Build real Theia application
+        run: npm --prefix studio/desktop run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+      - name: Install pinned open-source editor/Git extension pack
+        run: npm --prefix studio/desktop run plugins
+      - name: Install existing test browser harness
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify actual edit/save/reopen on a real Git workspace
+        run: node studio/desktop/test/browser-smoke.cjs
+        env:
+          DS_CHROME: /usr/bin/google-chrome
+          GITHUB_ACTIONS: 'true'
