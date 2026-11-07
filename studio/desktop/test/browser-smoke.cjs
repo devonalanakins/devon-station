@@ -56,11 +56,22 @@ async function main() {
     const response=await page.goto(url,{waitUntil:'domcontentloaded'});
     assert.equal(response.status(),200);
     await page.locator('.theia-ApplicationShell').waitFor({timeout:90000});
-    await page.keyboard.press('Control+p');
-    const quick=page.locator('.quick-input-widget input').first();
-    await quick.waitFor({timeout:10000});
-    await quick.fill('sample.ts');
-    await page.keyboard.press('Enter');
+    // Theia restores workbench focus asynchronously. Prefer the editor explorer
+    // over assuming a keyboard shortcut is already active on a freshly loaded page.
+    try {
+      await page.locator('.theia-ApplicationShell').click({position:{x:500,y:90}});
+      await page.keyboard.press('Control+p');
+      const quick=page.locator('.quick-input-widget input, .quick-open-widget input').first();
+      await quick.waitFor({timeout:5000});
+      await quick.fill('sample.ts');
+      await page.keyboard.press('Enter');
+    } catch (navigationError) {
+      await page.keyboard.press('Escape');
+      const src=page.getByText('src',{exact:true}).first();
+      await src.waitFor({timeout:10000});
+      await src.dblclick();
+      await page.getByText('sample.ts',{exact:true}).first().dblclick();
+    }
     const editor=page.locator('.monaco-editor').first();
     await editor.waitFor({timeout:30000});
     await editor.click();
@@ -80,6 +91,10 @@ async function main() {
       project:'devon-station',publicPublishing:false,providerCalls:0})+'\n');
   } catch(error) {
     process.stderr.write('Theia smoke failed: '+error.stack+'\n'+logs.join('').slice(-7000)+'\n');
+    try {
+      process.stderr.write('Workbench visible content: '+(await browser?.contexts()?.[0]?.pages()?.[0]?.locator('body').innerText()).slice(0,3000)+'\n');
+    } catch {}
+
     process.exitCode=1;
   } finally {
     await browser?.close();
