@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import http from 'node:http';
 import { listenLocalStudioHost, createLocalStudioHost, validRelativePath } from '../src/local-host.mjs';
 import { PROJECTS, knownProject, projectForRemote } from '../src/projects.mjs';
 
@@ -10,6 +11,9 @@ const root = await mkdtemp(path.join(tmpdir(), 'devon-studio-test-'));
 await mkdir(path.join(root, 'src'));
 await writeFile(path.join(root, 'src', 'hello.mjs'), 'export const result = 42;\n');
 await writeFile(path.join(root, '.env'), 'SECRET=abc\n');
+await writeFile(path.join(root, '.ENV'), 'SHOULD_NOT_ESCAPE=1\n');
+await mkdir(path.join(root, '.GIT'));
+await writeFile(path.join(root, '.GIT', 'config'), 'private git config\n');
 await writeFile(path.join(root, 'fake.key'), 'private');
 await writeFile(path.join(root, 'binary.dat'), Buffer.from([0, 1, 2]));
 await writeFile(path.join(root, 'huge.txt'), 'x'.repeat(128 * 1024 + 1));
@@ -49,11 +53,26 @@ test('rejects cross-origin browser requests and all writes', async () => {
   assert.equal((await get('/api/project', { origin: 'https://attacker.example' })).status, 403);
   assert.equal((await get('/api/project', { method: 'POST' })).status, 405);
 });
+test('rejects DNS-rebinding Host headers even with the correct bearer token', async () => {
+  const result = await new Promise((resolve, reject) => {
+    const request = http.get(app.address + '/api/project', {
+      headers: { Host: 'attacker.example', Authorization: 'Bearer ' + app.token },
+    }, response => {
+      let body = '';
+      response.on('data', chunk => { body += chunk; });
+      response.on('end', () => resolve({ status: response.statusCode, body: JSON.parse(body) }));
+    });
+    request.on('error', reject);
+  });
+  assert.equal(result.status, 403);
+  assert.equal(result.body.error, 'host-denied');
+});
+
 test('lists approved files without hidden credentials or symlinks', async () => {
   const result = await get('/api/files');
   assert.equal(result.status, 200);
   assert.ok(result.json.entries.some(e => e.name === 'src'));
-  assert.ok(!result.json.entries.some(e => ['.env', 'fake.key', 'escape'].includes(e.name)));
+  assert.ok(!result.json.entries.some(e => ['.env', '.ENV', '.GIT', 'fake.key', 'escape'].includes(e.name)));
 });
 test('reads a real local file and returns a content hash', async () => {
   const result = await get('/api/file?path=src/hello.mjs');
@@ -63,10 +82,12 @@ test('reads a real local file and returns a content hash', async () => {
   assert.equal(result.json.readOnly, true);
 });
 test('refuses traversal, private paths and symlink escapes', async () => {
-  for (const candidate of ['../src/hello.mjs', '.env', 'fake.key', 'escape/fake', '/etc/passwd', 'src\\hello.mjs']) {
+  for (const candidate of ['../src/hello.mjs', '.env', '.ENV', '.GIT/config', 'fake.key', 'escape/fake', '/etc/passwd', 'src\\hello.mjs']) {
     assert.notEqual((await get('/api/file?path=' + encodeURIComponent(candidate))).status, 200, candidate);
   }
   assert.equal(validRelativePath('../src/hello.mjs'), false);
+  assert.equal(validRelativePath('.GIT/config'), false);
+  assert.equal(validRelativePath('.ENV'), false);
 });
 test('rejects binary and oversized file content', async () => {
   assert.equal((await get('/api/file?path=binary.dat')).status, 415);
