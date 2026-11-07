@@ -56,6 +56,13 @@ async function main() {
     const response=await page.goto(url+'/#'+encodeURI(root),{waitUntil:'domcontentloaded'});
     assert.equal(response.status(),200);
     await page.locator('.theia-ApplicationShell').waitFor({timeout:90000});
+    // A new Git checkout is untrusted by default; do not disable Theia's security gate.
+    // This is a disposable, locally-created Git fixture and the test explicitly trusts it.
+    const trust=page.getByRole('button',{name:'Yes, I trust the authors'});
+    await trust.waitFor({timeout:30000});
+    await trust.click();
+    await page.locator('.workspace-trust-dialog').waitFor({state:'hidden',timeout:30000});
+    await page.locator('.theia-ApplicationShell').waitFor({timeout:60000});
     // Theia can delay plugin/workspace restoration beyond shell readiness.
     // Exercise the real Explorer user journey; never write the file through a test-only API.
     await page.keyboard.press('Control+Shift+e');
