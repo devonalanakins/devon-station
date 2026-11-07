@@ -35,8 +35,13 @@ async function executeObserved(executable, args, cwd, onOutput, timeoutMs) {
     let truncated = false;
     let timedOut = false;
     const started = Date.now();
+    // Node's test runner sets NODE_TEST_CONTEXT for its own subprocess. If inherited
+    // by another "node --test", it can return 0 WITHOUT running a single test.
+    // Strip that context for every observed command, including nested CI acceptance.
+    const env = { ...process.env };
+    delete env.NODE_TEST_CONTEXT;
     const child = spawn(executable, args, {
-      cwd, shell: false, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
+      cwd, shell: false, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, env,
     });
     const add = (source, bytes) => {
       const text = bytes.toString('utf8');
