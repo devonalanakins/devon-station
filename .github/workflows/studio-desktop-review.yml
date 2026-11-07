@@ -27,6 +27,8 @@ jobs:
           node-version: '24'
       - name: Verify private workbench launcher
         run: node --test studio/desktop/test/launcher.test.mjs
+      - name: Verify actual private Focus/Orbit/Verify source operations
+        run: node --test studio/desktop/extensions/studio-control/test/*.test.cjs
       - name: Install isolated Theia dependencies
         run: npm install --prefix studio/desktop --no-audit --no-fund
       - name: Build real Theia application

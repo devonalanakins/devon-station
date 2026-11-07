@@ -61,7 +61,8 @@ export function desktopCommand(options) {
     args: [cli, 'start', root, '--hostname=127.0.0.1', '--port=' + options.port,
       '--plugins=local-dir:' + join(desktopDir, 'plugins')],
     cwd: desktopDir,
-    env: { ...process.env, THEIA_HOSTS: '127.0.0.1:' + options.port + ',localhost:' + options.port },
+    env: { ...process.env, THEIA_HOSTS: '127.0.0.1:' + options.port + ',localhost:' + options.port,
+      DEVONSTATION_STUDIO_ROOT: root, DEVONSTATION_STUDIO_PROJECT: options.project },
   };
 }
 

@@ -32,8 +32,9 @@
     "rebuild": "theia rebuild:browser",
     "build": "npm run rebuild && theia build --mode development",
     "build:production": "npm run rebuild && theia build --mode production",
-    "plugins": "theia download:plugins",
-    "start": "node src/launch.mjs"
+    "plugins": "theia download:plugins && node scripts/stage-studio-extension.mjs",
+    "start": "node src/launch.mjs",
+    "test:studio-controls": "node --test extensions/studio-control/test/*.test.cjs"
   },
   "dependencies": {
     "@theia/core": "1.76.0",

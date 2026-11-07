@@ -42,3 +42,13 @@ node studio/desktop/test/browser-smoke.cjs   # requires installed root playwrigh
 The dedicated read-only CI workflow tests a genuine Theia browser/editor and verifies a real file is saved and persists after reload. **Do not claim this completed until the workflow passes on the exact commit.** Native Electron packaging, custom Focus/Orbit/Verify panels, AI ledger integration, mobile CodeMirror, private GitHub PR actions, Knowledge API, public Live Signal V4 pairing and remote host authentication remain unimplemented.
 
 Do not merge the stacked PR or deploy: its inherited Communications release candidate and protected uploader do not approve this broader source tree.
+
+## Private Studio controls — staged source extension
+
+The browser runtime also installs a first-party **open-source VS Code-compatible extension** from `extensions/studio-control` into its local, ignored `plugins/` directory during `npm run plugins`. No marketplace account or proprietary agent is needed.
+
+- **Focus** attempts actual supported IDE layout actions (close sidebar/panel, return editor focus); it reports unsupported commands instead of claiming they worked. This is an initial functional mode command, not the final cinematic shell.
+- **Orbit** lists *real* approved Git worktrees and their observed branches/HEADs. Selecting a worktree copies its local path for deliberate separate-session opening. It does **not** launch agents or aggregate private projects automatically.
+- **Verify Local** runs `git diff HEAD --check` and the known `node --test studio/test/local-host.test.mjs` suite **only for the approved DevonStation checkout**, after actual Theia workspace trust. It stores a metadata-only receipt in private extension global state. Logs stay inside Studio's private output panel. Local passing checks do **not** count as GitHub CI success or production deployment.
+
+The source-control commands are bound to the exact approved Git origin and workspace. Additional projects require their own reviewed test presets, grants, and execution isolation. Public Live Signal reporting remains off. Tests include a passing and failing real Node suite and a browser invocation of the local Verify control against a disposable committed Git repository.

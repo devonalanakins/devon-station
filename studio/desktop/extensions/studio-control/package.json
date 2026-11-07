@@ -1,0 +1,38 @@
+{
+  "name": "devonstation-studio-control",
+  "displayName": "DevonStation Studio Controls",
+  "version": "0.0.1",
+  "publisher": "devonalanakins",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "Private, source-attributed local Focus/Orbit/Verify commands for DevonStation Studio.",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "main": "./extension.cjs",
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:devonstation.studio.focus",
+    "onCommand:devonstation.studio.orbit",
+    "onCommand:devonstation.studio.verify"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "devonstation.studio.focus",
+        "title": "Focus",
+        "category": "DevonStation Studio"
+      },
+      {
+        "command": "devonstation.studio.orbit",
+        "title": "Orbit — inspect actual worktrees",
+        "category": "DevonStation Studio"
+      },
+      {
+        "command": "devonstation.studio.verify",
+        "title": "Verify Local — run focused checks",
+        "category": "DevonStation Studio"
+      }
+    ]
+  }
+}
