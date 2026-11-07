@@ -8,3 +8,6 @@ review-bundle/
 tools/*.png
 tools/*results.json
 release-review/
+studio/desktop/plugins/
+studio/desktop/lib/
+studio/desktop/.theia/
