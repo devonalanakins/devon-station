@@ -56,22 +56,30 @@ async function main() {
     const response=await page.goto(url,{waitUntil:'domcontentloaded'});
     assert.equal(response.status(),200);
     await page.locator('.theia-ApplicationShell').waitFor({timeout:90000});
-    // Theia restores workbench focus asynchronously. Prefer the editor explorer
-    // over assuming a keyboard shortcut is already active on a freshly loaded page.
+    // Theia can delay plugin/workspace restoration beyond shell readiness.
+    // Exercise the real Explorer user journey; never write the file through a test-only API.
+    await page.keyboard.press('Control+Shift+e');
+    let src=page.getByText('src',{exact:true}).first();
     try {
-      await page.locator('.theia-ApplicationShell').click({position:{x:500,y:90}});
-      await page.keyboard.press('Control+p');
-      const quick=page.locator('.quick-input-widget input, .quick-open-widget input').first();
-      await quick.waitFor({timeout:5000});
-      await quick.fill('sample.ts');
-      await page.keyboard.press('Enter');
-    } catch (navigationError) {
-      await page.keyboard.press('Escape');
-      const src=page.getByText('src',{exact:true}).first();
       await src.waitFor({timeout:10000});
-      await src.dblclick();
-      await page.getByText('sample.ts',{exact:true}).first().dblclick();
+    } catch (firstError) {
+      console.log('STUDIO_UI_DIAGNOSTICS',JSON.stringify(await page.evaluate(() => ({
+        title: document.title,
+        url: location.href,
+        text: document.body.innerText.slice(0,3500),
+        inputs:[...document.querySelectorAll('input')].map(e=>({type:e.type,placeholder:e.placeholder,role:e.getAttribute('role'),classes:e.className})).slice(0,12),
+        nav: [...document.querySelectorAll('[class*="navigator"],[class*="Navigator"],[class*="explorer"],[class*="Explorer"]')].slice(0,10).map(e=>({cls:typeof e.className==='string'?e.className:'',text:e.textContent?.slice(0,200)}))
+      }))));
+      await page.getByText('View',{exact:true}).first().click();
+      console.log('STUDIO_VIEW_MENU',JSON.stringify((await page.locator('body').innerText()).slice(0,2500)));
+      const explorer=page.getByRole('menuitem',{name:/Explorer/i}).first();
+      if(await explorer.count()) await explorer.click();
+      else await page.keyboard.press('Escape');
+      src=page.getByText('src',{exact:true}).first();
+      await src.waitFor({timeout:10000});
     }
+    await src.dblclick();
+    await page.getByText('sample.ts',{exact:true}).first().dblclick();
     const editor=page.locator('.monaco-editor').first();
     await editor.waitFor({timeout:30000});
     await editor.click();
