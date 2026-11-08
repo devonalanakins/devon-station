@@ -75,19 +75,30 @@ test('snapshots, identities, missing settings and duplicate bindings fail closed
  p=sample();delete p.production.settings;includes(p,'production_settings_unavailable');
 });
 
+test('A0 does not require a new mail DB when mail is fully disabled',()=>{
+ const f=sample();
+ f.target.settings.bindings=f.target.settings.bindings.filter(x=>x.name!=='MAIL_DB');
+ const result=verify(f);
+ assert.equal(result.isolatedCandidateReady,true);
+ assert.equal(result.checks.independentStorage,true);
+ assert.equal(result.releaseDecision,'RELEASE_NO_GO');
+ assert.equal(result.mayUpload,false);
+ assert.equal(result.mayDeploy,false);
+});
+
 test('D1 resources must be valid, distinct, isolated, and accounted for at all three Workers',()=>{
  let p=sample();p.target.settings.bindings.find(x=>x.name==='DB').database_id=uuid(1);
- includes(p,'isolated_d1_and_mail_d1_unverified');
+ includes(p,'isolated_storage_unverified');
  p=sample();p.target.settings.bindings.find(x=>x.name==='MAIL_DB').database_id=uuid(5);
- includes(p,'isolated_d1_and_mail_d1_unverified');
+ includes(p,'isolated_storage_unverified');
  p=sample();p.target.settings.bindings.find(x=>x.name==='MAIL_DB').database_id='not-uuid';
- includes(p,'isolated_d1_and_mail_d1_unverified');
+ includes(p,'isolated_storage_unverified');
  p=sample();p.mailAcceptance.settings.bindings=p.mailAcceptance.settings.bindings.filter(x=>x.name!=='DB');
- includes(p,'isolated_d1_and_mail_d1_unverified');
+ includes(p,'isolated_storage_unverified');
  p=sample();p.target.settings.bindings.find(x=>x.name==='DB').id=uuid(8);
- includes(p,'isolated_d1_and_mail_d1_unverified');
+ includes(p,'isolated_storage_unverified');
  p=sample();p.target.settings.bindings.find(x=>x.name==='DB').type='plain_text';
- includes(p,'isolated_d1_and_mail_d1_unverified');
+ includes(p,'isolated_storage_unverified');
 });
 
 test('missing or unsafe feature flags and provider secrets prevent independent acceptance',()=>{
