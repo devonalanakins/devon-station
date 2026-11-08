@@ -113,8 +113,8 @@ export async function handleAssistantEvidence({request,url,user,env,transport=fe
   (checks.total_count>checkRuns.length||checkSourceRows.length!==checkRuns.length);
  const failedResult=c=>c.status==='completed'&&c.conclusion!==null&&
   !['success','neutral','skipped'].includes(c.conclusion);
- const checkSummary=!checkRuns?'unavailable':checksPartial?'partial':
-  checkRuns.some(failedResult)?'failed':
+ const checkSummary=!checkRuns?'unavailable':checkRuns.some(failedResult)?'failed':
+  checksPartial?'partial':
   checkRuns.some(c=>c.status!=='completed'||c.conclusion===null)?'pending':
   checkRuns.length===0?'none_observed':'observed_pass';
  const actionsFailed=runs?.some(failedResult)??false;
