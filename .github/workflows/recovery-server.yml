@@ -47,6 +47,10 @@ jobs:
   unified-application:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -122,6 +126,27 @@ jobs:
           node tools/prepare-gen2-review.mjs
           cmp "$RUNNER_TEMP/ds011-gen2-first-sums" release-review/gen2/SHA256SUMS
           node tools/verify-assistant-release-boundary.mjs
+      - name: Observe real GitHub PR stack with read-only Generation 2 preflight
+        if: steps.release_boundary.outputs.review_bundle == 'false' && github.event_name == 'pull_request' && github.event.pull_request.number == 55
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GEN2_EXPECTED_SOURCE_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          node tools/gen2-release-preflight.mjs --report > release-review/gen2/preflight-report.json
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("release-review/gen2/preflight-report.json","utf8"));
+            if(r.releaseDecision!=="RELEASE_NO_GO"||r.canDeploy!==false||
+               r.uploadAuthorized!==false||r.readOnly!==true||
+               r.sourceCommit!==process.env.GEN2_EXPECTED_SOURCE_HEAD||
+               r.dependencyCount!==12||!Array.isArray(r.blockers)||
+               !r.blockers.includes("owner_approval_not_present")||
+               !r.blockers.includes("protected_uploader_not_established"))
+              throw Error("Gen2 source-only readiness report contract changed");
+            console.log("Generation 2 live GitHub source inspection: RELEASE_NO_GO, "+r.dependencyCount+" dependencies observed; "+r.blockers.length+" blockers recorded");
+          '
       - uses: actions/upload-artifact@v4
         if: steps.release_boundary.outputs.review_bundle == 'false'
         with:
