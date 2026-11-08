@@ -158,3 +158,30 @@ test('invalid run IDs and mismatched SHA never produce links or false passing ch
  assert.match(data.nextAction,/Recheck exact-head CI/);
  assert.doesNotMatch(JSON.stringify(data),/actions\/runs\/NaN|actions\/runs\/-1/);
 });
+
+
+test('an explicit pending legacy status prevents review advice even if Checks API passes',async()=>{
+ const source={...expected,[root+'/commits/'+head+'/status']:{state:'pending',statuses:[{state:'pending'}]}};
+ const {app}=fixture({source});const result=await(await app.fetch(get(evidence),env,{})).json();
+ assert.equal(result.exactHeadCI.legacyStatus,'pending');
+ assert.match(result.nextAction,/Recheck exact-head CI/);
+});
+
+test('missing legacy statuses and completed checks without conclusions remain unverified',async()=>{
+ const source={...expected,
+  [root+'/commits/'+head+'/status']:{state:'success'},
+  [root+'/commits/'+head+'/check-runs?per_page=100']:{total_count:1,check_runs:[
+   {name:'incomplete',head_sha:head,status:'completed',conclusion:null}]}};
+ const {app}=fixture({source});const result=await(await app.fetch(get(evidence),env,{})).json();
+ assert.equal(result.exactHeadCI.legacyStatus,'unavailable');
+ assert.equal(result.exactHeadCI.checkSummary,'pending');
+ assert(result.unknowns.includes('legacy_status_unavailable'));
+ assert.match(result.nextAction,/Recheck exact-head CI/);
+});
+
+test('unpaginated workflow evidence is explicitly partial when total count is absent',async()=>{
+ const source={...expected,[root+'/actions/runs?head_sha='+head+'&per_page=10']:{workflow_runs:expected[root+'/actions/runs?head_sha='+head+'&per_page=10'].workflow_runs}};
+ const {app}=fixture({source});const result=await(await app.fetch(get(evidence),env,{})).json();
+ assert(result.unknowns.includes('workflow_runs_may_be_partial'));
+ assert.match(result.nextAction,/Recheck exact-head CI/);
+});
