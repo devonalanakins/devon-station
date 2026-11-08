@@ -43,7 +43,7 @@ test('review preflight can inspect a consistent draft chain but NEVER authorize 
 });
 test('stale parent, owner/repo boundary and exact source drift are visible',()=>{
  let f=synthetic();f.pulls.at(-1).base.sha=SHA(1);has(f,'stale_parent_55');
- f=synthetic();f.pulls[4].head.repo.full_name='untrusted/fork';has(f,'invalid_pr_48');
+ f=synthetic();f.pulls[5].head.repo.full_name='untrusted/fork';has(f,'invalid_pr_48');
  f=synthetic();f.pulls.at(-1).head.sha=SHA(1);has(f,'candidate_head_drift');
  f=synthetic();f.pulls[6].head.ref='wrong-branch';has(f,'invalid_pr_49');
  f=synthetic();f.pulls[1].state='closed';has(f,'invalid_pr_42');
