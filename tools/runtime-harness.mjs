@@ -34,8 +34,9 @@ export async function start(path,{mailFixture=false,aiFixture=false,executionFix
    [repo]:{full_name:'devonalanakins/devon-station'},
    [repo+'/branches/main']:{commit:{sha:mainSha}},
    [repo+'/pulls?state=open&per_page=30']:[{number:52,state:'open',draft:true,head:{sha:evidenceSha},base:{ref:'feature/ds011-studio03-host-hardening'},updated_at:'2026-11-08T21:00:00Z'}],
-   [repo+'/commits/'+evidenceSha+'/status']:{state:'pending'},
-   [repo+'/actions/runs?head_sha='+evidenceSha+'&per_page=10']:{workflow_runs:[{id:12345,head_sha:evidenceSha,status:'completed',conclusion:'success'}]},
+   [repo+'/commits/'+evidenceSha+'/status']:{state:'pending',statuses:[],total_count:0},
+   [repo+'/actions/runs?head_sha='+evidenceSha+'&per_page=10']:{total_count:1,workflow_runs:[{id:12345,head_sha:evidenceSha,status:'completed',conclusion:'success'}]},
+   [repo+'/commits/'+evidenceSha+'/check-runs?per_page=100']:{total_count:2,check_runs:[{name:'verify',head_sha:evidenceSha,status:'completed',conclusion:'success'},{name:'snapshot',head_sha:evidenceSha,status:'completed',conclusion:'skipped'}]},
   };
   if(!Object.hasOwn(fixtures,url))throw Error('unexpected read-only fixture URL');
   return new Response(JSON.stringify(fixtures[url]),{headers:{'Content-Type':'application/json'}});
