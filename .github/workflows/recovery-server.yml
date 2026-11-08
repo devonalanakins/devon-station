@@ -69,6 +69,9 @@ jobs:
       - run: node tools/runtime-ai-work-browser.cjs
         env:
           DS_CHROME: /usr/bin/google-chrome
+      - run: node tools/runtime-assistant-browser.cjs
+        env:
+          DS_CHROME: /usr/bin/google-chrome
       - run: npm run test:runtime:browser
         env:
           DS_CHROME: /usr/bin/google-chrome
@@ -84,16 +87,33 @@ jobs:
             tools/ai-work-browser-results.json
           if-no-files-found: ignore
           retention-days: 7
-      - name: Prepare SHA-pinned review-only candidate and guarded fallback
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assistant-browser-evidence
+          path: |
+            tools/assistant-*.png
+            tools/assistant-browser-results.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Verify protected release boundary or prepare legacy review-only candidate
+        id: release_boundary
         shell: bash
         run: |
-          node tools/prepare-rb01-review.mjs
-          node tools/verify-ai-work-release-boundary.mjs
-          (cd release-review && sha256sum -c SHA256SUMS)
-          cp release-review/SHA256SUMS "$RUNNER_TEMP/rb01-first-sums"
-          node tools/prepare-rb01-review.mjs
-          cmp "$RUNNER_TEMP/rb01-first-sums" release-review/SHA256SUMS
+          if test -f worker/assistant-evidence.mjs; then
+            node tools/verify-assistant-release-boundary.mjs
+            echo "review_bundle=false" >> "$GITHUB_OUTPUT"
+          else
+            node tools/prepare-rb01-review.mjs
+            node tools/verify-ai-work-release-boundary.mjs
+            (cd release-review && sha256sum -c SHA256SUMS)
+            cp release-review/SHA256SUMS "$RUNNER_TEMP/rb01-first-sums"
+            node tools/prepare-rb01-review.mjs
+            cmp "$RUNNER_TEMP/rb01-first-sums" release-review/SHA256SUMS
+            echo "review_bundle=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/upload-artifact@v4
+        if: steps.release_boundary.outputs.review_bundle == 'true'
         with:
           name: ds011-rb01-review-only-bundles
           path: release-review/
