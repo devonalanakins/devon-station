@@ -7,7 +7,7 @@ import {verifyApprovedRelease,verifyReviewCandidate} from './comms-acceptance-up
 const source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const candidate=JSON.parse(source('deployment/modules.json'));
 const keys=Object.keys(candidate);
-assert.equal(keys.length,47,'Generation 2 candidate must have reviewed 47-module graph');
+assert.equal(keys.length,48,'Generation 2 candidate must have reviewed 48-module graph');
 assert(keys.includes('worker/assistant-evidence.mjs'),'assistant evidence source must be bundled');
 assert(keys.includes('worker/access.mjs')&&keys.includes('worker/mail-api.mjs'));
 assert.match(candidate['worker/index.mjs'],/assistant-evidence\.mjs/);
@@ -28,4 +28,4 @@ assert.throws(()=>verifyReviewCandidate({manifest,candidateBytes,expectedSha:sou
  /DS011 acceptance refused: module inventory differs from reviewed build/);
 assert.throws(()=>verifyApprovedRelease({manifest,candidateBytes,expectedSha:sourceCommit}),
  /DS011 acceptance refused: release is outside the immutable owner-approved source SHA/);
-console.log('PASS: 47-module assistant source refuses both RB01 review builder and immutable protected mail uploader. No package or deployment authorized.');
+console.log('PASS: 48-module assistant source refuses both RB01 review builder and immutable protected mail uploader. No package or deployment authorized.');
