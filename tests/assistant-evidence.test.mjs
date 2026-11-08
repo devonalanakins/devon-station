@@ -12,8 +12,9 @@ const expected={
  [root]:{full_name:'devonalanakins/devon-station',default_branch:'main'},
  [root+'/branches/main']:{commit:{sha:main}},
  [root+'/pulls?state=open&per_page=30']:[{number:52,draft:true,state:'open',head:{sha:head},base:{ref:'feature/studio'},updated_at:'2026-11-08T21:00:00Z',title:'<img src=x onerror=alert(1)>'}],
- [root+'/commits/'+head+'/status']:{state:'pending'},
- [root+'/actions/runs?head_sha='+head+'&per_page=10']:{workflow_runs:[{id:12345,head_sha:head,status:'completed',conclusion:'success'}]}
+ [root+'/commits/'+head+'/status']:{state:'pending',statuses:[],total_count:0},
+ [root+'/actions/runs?head_sha='+head+'&per_page=10']:{total_count:1,workflow_runs:[{id:12345,head_sha:head,status:'completed',conclusion:'success'}]},
+ [root+'/commits/'+head+'/check-runs?per_page=100']:{total_count:2,check_runs:[{name:'verify',head_sha:head,status:'completed',conclusion:'success'},{name:'public-snapshot',head_sha:head,status:'completed',conclusion:'skipped'}]}
 };
 const response=body=>new Response(JSON.stringify(body),{status:200,headers:{'Content-Type':'application/json'}});
 function fixture({subject=owner.subject,source=expected,token}={}){
@@ -41,8 +42,11 @@ test('real structured GitHub evidence is bounded, source-backed and never upgrad
  const data=await r.json();assert.equal(data.command,'/status');assert.equal(data.executionClass,'A0');assert.equal(data.readOnly,true);
  assert.equal(data.main.revision,main);assert.equal(data.selectedPullRequest.number,52);
  assert.equal(data.selectedPullRequest.headSha,head);assert.equal(data.exactHeadCI.revision,head);
- assert.equal(data.exactHeadCI.commitStatus,'pending');assert.equal(data.exactHeadCI.workflowRuns[0].conclusion,'success');
- assert.match(data.nextAction,/Review PR #52/);assert.equal(data.openPullRequestsObserved,1);assert.equal(calls.length,5);
+ assert.equal(data.exactHeadCI.commitStatus,null);assert.equal(data.exactHeadCI.legacyStatus,'none_reported');
+ assert.equal(data.exactHeadCI.checkSummary,'observed_pass');assert.equal(data.exactHeadCI.checkTotal,2);
+ assert.deepEqual(data.exactHeadCI.checkRuns.map(r=>r.conclusion),['success','skipped']);
+ assert.equal(data.exactHeadCI.workflowRuns[0].conclusion,'success');
+ assert.match(data.nextAction,/Review PR #52/);assert.equal(data.openPullRequestsObserved,1);assert.equal(calls.length,6);
  assert.doesNotMatch(JSON.stringify(data),/onerror|<img|test-read-only-token|deployment succeeded|\"status\":\"LIVE\"/i);
  const follow=await app.fetch(get(evidence.replace('%2Fstatus','%2Fcontinue')),env,{});
  assert.equal((await follow.json()).command,'/continue');
@@ -92,8 +96,65 @@ test('provider redirect, 500, HTML, oversized output and forged run revision are
  };
  const app=createStation({},async()=>owner,transport);
  const r=await app.fetch(get(evidence),env,{}),data=await r.json();
- assert.equal(r.status,200);assert.equal(callCount,5);
+ assert.equal(r.status,200);assert.equal(callCount,6);
  assert.equal(data.main,null);assert.equal(data.exactHeadCI.commitStatus,null);
- assert.deepEqual(data.exactHeadCI.workflowRuns,[]);assert(data.unknowns.includes('no_exact_head_checks_observed'));
+ assert.equal(data.exactHeadCI.checkSummary,'unavailable');
+ assert.deepEqual(data.exactHeadCI.workflowRuns,[]);assert(data.unknowns.includes('check_runs_unavailable'));
+ assert(data.unknowns.includes('no_workflow_runs_observed'));
  assert.equal(data.selectedPullRequest.url,'https://github.com/devonalanakins/devon-station/pull/52');
+});
+
+
+test('failed check outranks an all-green workflow and empty legacy statuses',async()=>{
+ const source={...expected,
+  [root+'/commits/'+head+'/check-runs?per_page=100']:{total_count:2,check_runs:[
+   {name:'verification',head_sha:head,status:'completed',conclusion:'failure'},
+   {name:'security',head_sha:head,status:'completed',conclusion:'success'}]}};
+ const {app}=fixture({source});const r=await app.fetch(get(evidence),env,{});
+ assert.equal(r.status,200);const data=await r.json();
+ assert.equal(data.exactHeadCI.checkSummary,'failed');
+ assert.match(data.nextAction,/Inspect failed exact-head checks/);
+});
+
+test('in-progress, stale-head, partial and unavailable checks do not imply readiness',async()=>{
+ const checkKey=root+'/commits/'+head+'/check-runs?per_page=100';
+ const cases=[
+  [{total_count:1,check_runs:[{name:'still running',head_sha:head,status:'in_progress',conclusion:null}]},'pending',null],
+  [{total_count:2,check_runs:[{name:'correct',head_sha:head,status:'completed',conclusion:'success'},
+   {name:'foreign',head_sha:'c'.repeat(40),status:'completed',conclusion:'failure'}]},'partial','check_runs_partial'],
+  [{total_count:101,check_runs:Array.from({length:100},(_,i)=>({name:'check'+i,head_sha:head,status:'completed',conclusion:'success'}))},'partial','check_runs_partial'],
+  [null,'unavailable','check_runs_unavailable'],
+ ];
+ for(const [value,expectedSummary,unknown] of cases){
+  const {app}=fixture({source:{...expected,[checkKey]:value}});
+  const result=await (await app.fetch(get(evidence),env,{})).json();
+  assert.equal(result.exactHeadCI.checkSummary,expectedSummary);
+  assert.match(result.nextAction,/Recheck exact-head CI/);
+  if(unknown)assert(result.unknowns.includes(unknown));
+ }
+});
+
+test('legacy status failure is not concealed by successful modern checks',async()=>{
+ const source={...expected,[root+'/commits/'+head+'/status']:{state:'failure',statuses:[{state:'failure'}]}};
+ const {app}=fixture({source});const data=await(await app.fetch(get(evidence),env,{})).json();
+ assert.equal(data.exactHeadCI.commitStatus,'failure');
+ assert.equal(data.exactHeadCI.legacyStatus,'failure');
+ assert.match(data.nextAction,/Inspect failed exact-head checks/);
+});
+
+test('invalid run IDs and mismatched SHA never produce links or false passing checks',async()=>{
+ const source={...expected,
+  [root+'/actions/runs?head_sha='+head+'&per_page=10']:{total_count:3,workflow_runs:[
+   {id:-1,head_sha:head,status:'completed',conclusion:'success'},
+   {id:'unsafe',head_sha:head,status:'completed',conclusion:'success'},
+   {id:212,head_sha:'c'.repeat(40),status:'completed',conclusion:'success'}]},
+  [root+'/commits/'+head+'/check-runs?per_page=100']:{total_count:1,check_runs:[
+   {name:'spoof',head_sha:'c'.repeat(40),status:'completed',conclusion:'success'}]}};
+ const {app}=fixture({source});const data=await(await app.fetch(get(evidence),env,{})).json();
+ assert.deepEqual(data.exactHeadCI.workflowRuns,[]);
+ assert.equal(data.exactHeadCI.checkSummary,'partial');
+ assert(data.unknowns.includes('workflow_runs_may_be_partial'));
+ assert(data.unknowns.includes('check_runs_partial'));
+ assert.match(data.nextAction,/Recheck exact-head CI/);
+ assert.doesNotMatch(JSON.stringify(data),/actions\/runs\/NaN|actions\/runs\/-1/);
 });
