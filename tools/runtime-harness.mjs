@@ -7,7 +7,7 @@ import {verifyAccessJWT} from '../worker/access.mjs';
 const keys=generateKeyPairSync('rsa',{modulusLength:2048}),jwk=keys.publicKey.export({format:'jwk'});Object.assign(jwk,{kid:'offline-browser',alg:'RS256'});
 const config={issuer:'https://offline.cloudflareaccess.com',audience:'offline-browser',jwksUrl:'https://offline.cloudflareaccess.com/cdn-cgi/access/certs'};
 export function token(subject='test-owner',overrides={}){const encode=x=>Buffer.from(JSON.stringify(x)).toString('base64url');const data=encode({alg:'RS256',kid:jwk.kid})+'.'+encode({iss:config.issuer,aud:[config.audience],sub:subject,email:'owner@example.test',exp:Date.now()/1000+300,...overrides});return data+'.'+sign('RSA-SHA256',Buffer.from(data),keys.privateKey).toString('base64url');}
-export async function start(path,{mailFixture=false,aiFixture=false,executionFixture=false,apiOnly=false,connect}={}){
+export async function start(path,{mailFixture=false,aiFixture=false,executionFixture=false,assistantFixture=false,apiOnly=false,connect}={}){
  const sqlite=new DatabaseSync(path);sqlite.exec(readFileSync(new URL('../worker/schema.sql',import.meta.url),'utf8'));sqlite.exec(readFileSync(new URL('../worker/migrations/0003-scoped-workspace.sql',import.meta.url),'utf8'));
  const rows=[{id:'project-a',name:'Recovery acceptance',area:'Devon Works',record:'https://www.notion.so/synthetic-project-a'},{id:'project-b',name:'Portable workspace',area:'Devon Works',record:'https://www.notion.so/synthetic-project-b'}];
  sqlite.prepare('INSERT OR IGNORE INTO station_portfolio_cache(owner_sub,source_id,fetch_time,payload) VALUES(?,?,?,?)').run('test-owner','synthetic-source',1793448000000,JSON.stringify(rows));
@@ -25,7 +25,22 @@ export async function start(path,{mailFixture=false,aiFixture=false,executionFix
  }
  const grants=[{subject:'test-owner',principalId:'owner-a',scopeKind:'personal',scopeId:'personal-a',role:'owner'}];
  let externalCalls=0;
- const app=createStation(assets,request=>verifyAccessJWT(request.headers.get('Cf-Access-Jwt-Assertion'),config,async()=>({keys:[jwk]})),async()=>{externalCalls++;throw Error('forbidden external operation');},mailFixture?connect:undefined);
+ const evidenceSha='b'.repeat(40),mainSha='a'.repeat(40);
+ const safeFixture=async(url,options)=>{
+  if(!assistantFixture){externalCalls++;throw Error('forbidden external operation');}
+  if(options.method!=='GET'||options.redirect!=='manual'||!url.startsWith('https://api.github.com/repos/devonalanakins/devon-station'))throw Error('unsafe GitHub fixture operation');
+  const repo='https://api.github.com/repos/devonalanakins/devon-station';
+  const fixtures={
+   [repo]:{full_name:'devonalanakins/devon-station'},
+   [repo+'/branches/main']:{commit:{sha:mainSha}},
+   [repo+'/pulls?state=open&per_page=30']:[{number:52,state:'open',draft:true,head:{sha:evidenceSha},base:{ref:'feature/ds011-studio03-host-hardening'},updated_at:'2026-11-08T21:00:00Z'}],
+   [repo+'/commits/'+evidenceSha+'/status']:{state:'pending'},
+   [repo+'/actions/runs?head_sha='+evidenceSha+'&per_page=10']:{workflow_runs:[{id:12345,head_sha:evidenceSha,status:'completed',conclusion:'success'}]},
+  };
+  if(!Object.hasOwn(fixtures,url))throw Error('unexpected read-only fixture URL');
+  return new Response(JSON.stringify(fixtures[url]),{headers:{'Content-Type':'application/json'}});
+ };
+ const app=createStation(assets,request=>verifyAccessJWT(request.headers.get('Cf-Access-Jwt-Assertion'),config,async()=>({keys:[jwk]})),safeFixture,mailFixture?connect:undefined);
  let env;
  const server=createServer(async(req,res)=>{
   try{const chunks=[];for await(const chunk of req)chunks.push(chunk);const body=Buffer.concat(chunks);const r=new Request(env.APP_ORIGIN+req.url,{method:req.method,headers:req.headers,...(body.length?{body}:{})});const response=await app.fetch(r,env,{});res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));}catch{res.writeHead(500);res.end();}
@@ -37,5 +52,6 @@ export async function start(path,{mailFixture=false,aiFixture=false,executionFix
   MAIL_PAYLOAD_KEY_ID:'test-key',MAIL_PAYLOAD_KEYS_JSON:JSON.stringify({'test-key':'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE='})});
  if(aiFixture)Object.assign(env,{AI_WORK_ENABLED:'true',AI_WORK_OWNER_SUB:'test-owner',AI_WORK_PROJECTS_JSON:JSON.stringify(['devon-station','rhen']),AI_WORK_KEY_ID:'ai-test',AI_WORK_KEYS_JSON:JSON.stringify({'ai-test':'AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI='})});
  if(executionFixture)env.AI_WORK_LEDGER_ENABLED='true';
+ if(assistantFixture)Object.assign(env,{ASSISTANT_EVIDENCE_ENABLED:'true',ASSISTANT_OWNER_SUB:'test-owner',ASSISTANT_PROJECT_GRANTS_JSON:JSON.stringify([{subject:'test-owner',workspaceId:'software',projectId:'devon-station',capability:'read-evidence'}])});
  return {url:env.APP_ORIGIN,env,externalCalls:()=>externalCalls,close:async()=>{await new Promise(resolve=>server.close(resolve));sqlite.close();}};
 }
