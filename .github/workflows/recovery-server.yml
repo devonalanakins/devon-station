@@ -112,6 +112,23 @@ jobs:
             cmp "$RUNNER_TEMP/rb01-first-sums" release-review/SHA256SUMS
             echo "review_bundle=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Build and independently verify Generation 2 source-only review artifacts
+        if: steps.release_boundary.outputs.review_bundle == 'false'
+        shell: bash
+        run: |
+          node tools/prepare-gen2-review.mjs
+          (cd release-review/gen2 && sha256sum -c SHA256SUMS)
+          cp release-review/gen2/SHA256SUMS "$RUNNER_TEMP/ds011-gen2-first-sums"
+          node tools/prepare-gen2-review.mjs
+          cmp "$RUNNER_TEMP/ds011-gen2-first-sums" release-review/gen2/SHA256SUMS
+          node tools/verify-assistant-release-boundary.mjs
+      - uses: actions/upload-artifact@v4
+        if: steps.release_boundary.outputs.review_bundle == 'false'
+        with:
+          name: ds011-gen2-source-only-review
+          path: release-review/gen2/
+          if-no-files-found: error
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: steps.release_boundary.outputs.review_bundle == 'true'
         with:
