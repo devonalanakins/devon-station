@@ -79,31 +79,72 @@ export async function handleAssistantEvidence({request,url,user,env,transport=fe
        updatedAt:Number.isFinite(Date.parse(p.updated_at))?p.updated_at:null
      })).sort((a,b)=>(Date.parse(b.updatedAt||0)||0)-(Date.parse(a.updatedAt||0)||0)):null;
  const pull=candidates?.[0]??null;
- const [status,actions]=pull?await Promise.all([
+ const [status,actions,checks]=pull?await Promise.all([
   githubGet(repo+'/commits/'+pull.headSha+'/status',transport,env),
-  githubGet(repo+'/actions/runs?head_sha='+pull.headSha+'&per_page=10',transport,env)
- ]):[null,null];
- const ciStatus=state(status?.state);
- const runs=Array.isArray(actions?.workflow_runs)?actions.workflow_runs.filter(r=>r.head_sha===pull.headSha).map(r=>({
+  githubGet(repo+'/actions/runs?head_sha='+pull.headSha+'&per_page=10',transport,env),
+  githubGet(repo+'/commits/'+pull.headSha+'/check-runs?per_page=100',transport,env)
+ ]):[null,null,null];
+ // GitHub's combined commit status API is distinct from the modern Checks API.
+ // In particular, "pending" with zero legacy statuses does not mean Actions
+ // checks are pending. Neither API proves branch protection or merge authority.
+ const legacyStatuses=Array.isArray(status?.statuses)?status.statuses:null;
+ const ciStatus=legacyStatuses?.length===0?null:state(status?.state);
+ const legacyStatus=legacyStatuses?.length===0?'none_reported':ciStatus===null?'unavailable':ciStatus;
+ const runs=Array.isArray(actions?.workflow_runs)?actions.workflow_runs.filter(r=>
+  r?.head_sha===pull.headSha&&Number.isSafeInteger(r.id)&&r.id>0
+ ).map(r=>({
   status:['queued','in_progress','completed'].includes(r.status)?r.status:'unknown',
   conclusion:['success','failure','cancelled','timed_out','action_required','neutral','skipped','startup_failure'].includes(r.conclusion)?r.conclusion:null,
-  url:'https://github.com/'+project.repository+'/actions/runs/'+Number(r.id),
- })).filter(r=>!r.url.endsWith('/NaN')).slice(0,10):null;
+  url:'https://github.com/'+project.repository+'/actions/runs/'+r.id,
+ })).slice(0,10):null;
+ const runsPartial=Array.isArray(actions?.workflow_runs)&&
+  (Number.isSafeInteger(actions.total_count)&&actions.total_count>runs.length||
+   actions.workflow_runs.some(r=>r?.head_sha!==pull.headSha||
+     !Number.isSafeInteger(r?.id)||r.id<1));
+ const checkSourceValid=checks&&Number.isSafeInteger(checks.total_count)&&checks.total_count>=0&&
+  Array.isArray(checks.check_runs)&&checks.check_runs.length<=100;
+ const checkSourceRows=checkSourceValid?checks.check_runs:null;
+ const checkRuns=checkSourceRows?checkSourceRows.filter(c=>
+  c&&c.head_sha===pull.headSha&&typeof c.name==='string'&&c.name.length>0&&
+  ['queued','in_progress','completed'].includes(c.status)&&
+  (c.conclusion===null||['success','failure','cancelled','timed_out','action_required','neutral','skipped','startup_failure'].includes(c.conclusion))
+ ).map(c=>({name:c.name.slice(0,100),status:c.status,conclusion:c.conclusion})):null;
+ const checksPartial=!!checkSourceRows&&
+  (checks.total_count>checkRuns.length||checkSourceRows.length!==checkRuns.length);
+ const failedResult=c=>c.status==='completed'&&
+  !['success','neutral','skipped'].includes(c.conclusion);
+ const checkSummary=!checkRuns?'unavailable':checksPartial?'partial':
+  checkRuns.some(failedResult)?'failed':
+  checkRuns.some(c=>c.status!=='completed'||c.conclusion===null)?'pending':
+  checkRuns.length===0?'none_observed':'observed_pass';
+ const actionsFailed=runs?.some(failedResult)??false;
+ const actionsPending=runs?.some(r=>r.status!=='completed'||r.conclusion===null)??false;
+ const hasFailure=checkRuns?.some(failedResult)||actionsFailed||
+  ciStatus==='failure'||ciStatus==='error';
+ const checksUrl=pull?'https://github.com/'+project.repository+'/commit/'+pull.headSha+'/checks':null;
  const unknowns=[];
  if(!repository||repository.full_name!==project.repository)unknowns.push('repository_metadata_unavailable');
  if(!mainSha)unknowns.push('main_head_unavailable');
  if(!candidates)unknowns.push('pull_requests_unavailable');
  else if(candidates.length===30)unknowns.push('pull_request_list_may_be_partial');
- if(pull&&!ciStatus&&runs===null)unknowns.push('exact_head_checks_unavailable');
- else if(pull&&!ciStatus&&!runs?.length)unknowns.push('no_exact_head_checks_observed');
+ if(pull){
+  if(!checkSourceValid)unknowns.push('check_runs_unavailable');
+  else if(checksPartial)unknowns.push('check_runs_partial');
+  else if(checkRuns.length===0)unknowns.push('no_check_runs_observed');
+  if(runs===null)unknowns.push('workflow_runs_unavailable');
+  else if(runsPartial)unknowns.push('workflow_runs_may_be_partial');
+  else if(!runs.length)unknowns.push('no_workflow_runs_observed');
+  if(legacyStatus==='unavailable')unknowns.push('legacy_status_unavailable');
+ }
  if(!pull&&candidates?.length===0)unknowns.push('no_open_pull_requests_observed');
- const failing=runs?.some(x=>['failure','timed_out','startup_failure'].includes(x.conclusion))||ciStatus==='failure'||ciStatus==='error';
  const nextAction=!mainSha?'Confirm the repository main HEAD from GitHub before acting.'
+  :!repository||repository.full_name!==project.repository?'Verify the repository identity before acting.'
   :!candidates?'Recheck the open pull request list before selecting work.'
   :!pull?'Inspect the approved issue for the next bounded development task.'
-  :failing?'Inspect failed exact-head checks on PR #'+pull.number+' before review.'
-  :(!ciStatus&&(!runs||!runs.length))?'Verify exact-head CI for PR #'+pull.number+' before review.'
-  :'Review PR #'+pull.number+' and its dependency chain before any merge.';
+  :hasFailure?'Inspect failed exact-head checks on PR #'+pull.number+' before review.'
+  :checkSummary!=='observed_pass'||runsPartial||runs===null||actionsPending
+   ?'Recheck exact-head CI and missing checks for PR #'+pull.number+' before review.'
+  :'Review PR #'+pull.number+' and its dependency chain; required checks and merge authority remain unverified.';
  return {
   command:command.label,executionClass:'A0',readOnly:true,projectId,workspaceId,
   observedAt,source:'github_public_repository_api',repository:project.repository,
@@ -111,7 +152,7 @@ export async function handleAssistantEvidence({request,url,user,env,transport=fe
   main:mainSha?{revision:mainSha,url:'https://github.com/'+project.repository+'/commit/'+mainSha}:null,
   openPullRequestsObserved:candidates?.length??null,
   selectedPullRequest:pull?{...pull,url:'https://github.com/'+project.repository+'/pull/'+pull.number}:null,
-  exactHeadCI:pull?{revision:pull.headSha,commitStatus:ciStatus,workflowRuns:runs}:null,
+  exactHeadCI:pull?{revision:pull.headSha,commitStatus:ciStatus,legacyStatus,workflowRuns:runs,checkSummary,checkRuns,checkTotal:checkSourceValid?checks.total_count:null,checksUrl}:null,
   unknowns,nextAction,
   limitations:['Read-only public GitHub evidence; no private repository, deployment, merge, or live app verification.'],
  };
