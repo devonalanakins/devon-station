@@ -103,18 +103,23 @@ test('actual blob verification catches edits hidden by assume-unchanged index fl
   await assert.rejects(verifiedSourceCommit(f.dir),/tracked source bytes differ/);
 });
 
-test('clean-checkout CLI rebuilds a tampered ignored bundle and produces identical review artifacts',async t=>{
-  const f=fixture(t,true);
-  const run=()=>execFileSync(process.execPath,['tools/prepare-rb01-review.mjs'],{cwd:f.dir,encoding:'utf8',stdio:['ignore','pipe','pipe']});
-  run();
-  const manifest=JSON.parse(readFileSync(join(f.dir,'release-review/manifest.json'),'utf8'));
-  assert.equal(manifest.sourceCommit,f.commit);
-  const first=readFileSync(join(f.dir,'release-review/SHA256SUMS'),'utf8');
-  const candidate=JSON.parse(readFileSync(join(f.dir,'deployment/modules.json'),'utf8'));
-  candidate['worker/state.mjs']+='\n// fabricated stale bundle alteration';
-  writeFileSync(join(f.dir,'deployment/modules.json'),JSON.stringify(candidate));
-  assert.equal(await verifiedSourceCommit(f.dir),f.commit,'ignored build output is not a tracked-source edit');
-  run();
-  assert.equal(readFileSync(join(f.dir,'release-review/SHA256SUMS'),'utf8'),first);
-  assert(!readFileSync(join(f.dir,'release-review/candidate.modules.json'),'utf8').includes('fabricated stale bundle alteration'));
+test('clean-checkout source-only CLI rebuilds ignored outputs but rejects unreviewed expanded module graph',async t=>{
+ const f=fixture(t,true);
+ const run=()=>execFileSync(process.execPath,['tools/prepare-rb01-review.mjs'],{cwd:f.dir,encoding:'utf8',stdio:['ignore','pipe','pipe']});
+ const expectedRefusal=()=>{
+  let error;try{run();}catch(e){error=e;}
+  assert(error,'the protected RB01 review builder must refuse the expanded module graph');
+  assert.match(String(error.stderr),/RB01 review package refused: candidate module graph changed/);
+ };
+ expectedRefusal();
+ const first=readFileSync(join(f.dir,'deployment/modules.json'),'utf8');
+ const candidate=JSON.parse(first);
+ assert(Object.hasOwn(candidate,'worker/assistant-evidence.mjs'));
+ assert.equal(Object.keys(candidate).length,47);
+ candidate['worker/state.mjs']+='\n// fabricated stale bundle alteration';
+ writeFileSync(join(f.dir,'deployment/modules.json'),JSON.stringify(candidate));
+ assert.equal(await verifiedSourceCommit(f.dir),f.commit,'ignored build output is not a tracked-source edit');
+ expectedRefusal();
+ assert.equal(readFileSync(join(f.dir,'deployment/modules.json'),'utf8'),first,'review command must rebuild ignored output from tracked source');
+ assert(!readFileSync(join(f.dir,'deployment/modules.json'),'utf8').includes('fabricated stale bundle alteration'));
 });
