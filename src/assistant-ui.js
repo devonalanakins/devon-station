@@ -7,7 +7,7 @@ globalThis.StationAssistant=(()=>{
   const row=document.createElement('div');row.className='as-fact';
   const title=document.createElement('dt');put(title,label);row.append(title);
   const detail=document.createElement('dd');
-  if(url&&/^https:\/\/github\.com\/devonalanakins\/devon-station\/(pull\/[0-9]+|commit\/[0-9a-f]{40})$/.test(url)){
+  if(url&&/^https:\/\/github\.com\/devonalanakins\/devon-station\/(pull\/[0-9]+|commit\/[0-9a-f]{40}(\/checks)?|actions\/runs\/[1-9][0-9]*)$/.test(url)){
    const anchor=document.createElement('a');anchor.href=url;anchor.rel='noopener noreferrer';anchor.target='_blank';put(anchor,value);detail.append(anchor);
   }else put(detail,value);
   row.append(detail);list.append(row);
@@ -34,7 +34,16 @@ globalThis.StationAssistant=(()=>{
   entry(facts,'Selected PR',pr?'#'+pr.number+' · '+(pr.draft?'Draft':'Open'):'Unavailable',pr?.url);
   if(pr)entry(facts,'PR HEAD',pr.headSha||'Unavailable');
   const ci=data.exactHeadCI;
-  entry(facts,'Commit status',ci?.commitStatus||'Unavailable / not observed');
+  const labels={observed_pass:'Observed passing (not merge approval)',failed:'Failed',pending:'Pending',partial:'Partial / unverified',none_observed:'No checks observed',unavailable:'Unavailable'};
+  entry(facts,'Exact-head Checks API',ci?((labels[ci.checkSummary]||'Unavailable')+
+   (Number.isSafeInteger(ci.checkTotal)?' · '+ci.checkTotal+' reported':'')):'Unavailable',ci?.checksUrl);
+  if(Array.isArray(ci?.checkRuns)&&ci.checkRuns.length){
+   const count=Math.min(ci.checkRuns.length,5);
+   entry(facts,'Checks observed',ci.checkRuns.slice(0,count).map(c=>
+    c.name+': '+(c.status==='completed'?(c.conclusion||'unknown'):c.status)).join('; ')+
+    (ci.checkRuns.length>count?' · +'+(ci.checkRuns.length-count)+' more':''),ci.checksUrl);
+  }
+  entry(facts,'Legacy commit statuses',ci?.legacyStatus==='none_reported'?'None reported':ci?.legacyStatus||'Unavailable');
   if(ci?.workflowRuns?.length){
    entry(facts,'Actions runs observed',ci.workflowRuns.map(r=>r.status+' / '+(r.conclusion||'pending')).join('; '));
   }else entry(facts,'Actions runs','None observed or inaccessible');
