@@ -5,7 +5,8 @@
  */
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {resolve,join} from 'node:path';
 import {verifiedSourceCommit} from './prepare-rb01-review.mjs';
 import {GEN2_MODULES,GEN2_ASSETS} from './prepare-gen2-review.mjs';
 
@@ -135,7 +136,7 @@ export function evaluateGen2Stack({pulls,checks,expectedSourceSha,artifact=null}
 }
 
 async function getJson(url,token,request=fetch){
- if(!url.startsWith('https://api.github.com/repos/'+REPO+'/'))refusal('unexpected provider endpoint');
+ if(typeof url!=='string'||!url.startsWith('https://api.github.com/repos/'+REPO+'/'))refusal('unexpected provider endpoint');
  const headers={'Accept':'application/vnd.github+json','User-Agent':'DevonStation-Gen2-readonly-preflight/1',
   'X-GitHub-Api-Version':'2022-11-28'};
  if(token)headers.Authorization='Bearer '+token;
@@ -158,7 +159,8 @@ export async function observeGen2Stack({token='',request=fetch}={}){
  // endpoints, provider mutation, private business records or tooling execution.
  for(const {number} of CHAIN){
   const p=await getJson('https://api.github.com/repos/'+REPO+'/pulls/'+number,token,request);
-  pulls.push({number:p.number,state:p.state,draft:p.draft,merged:p.merged_at!==null,
+  if(!SHA.test(p.head?.sha))refusal('invalid PR head before check lookup');
+  pulls.push({number:p.number,state:p.state,draft:p.draft,merged:p.merged_at!=null,
    head:{ref:p.head?.ref,sha:p.head?.sha,repo:{full_name:p.head?.repo?.full_name}},
    base:{ref:p.base?.ref,sha:p.base?.sha,repo:{full_name:p.base?.repo?.full_name}}});
   const check=await getJson('https://api.github.com/repos/'+REPO+'/commits/'+p.head?.sha+'/check-runs?per_page=100',token,request);
@@ -176,8 +178,8 @@ async function main(){
  if(actualHead!==process.env.GEN2_EXPECTED_SOURCE_HEAD)refusal('checkout differs from triggering head');
  const root=fileURLToPath(new URL('../',import.meta.url));
  const [candidateBytes,manifestText]=await Promise.all([
-  readFile(root+'release-review/gen2/candidate.modules.json'),
-  readFile(root+'release-review/gen2/manifest.json','utf8')
+  readFile(join(root,'release-review/gen2/candidate.modules.json')),
+  readFile(join(root,'release-review/gen2/manifest.json'),'utf8')
  ]);
  const artifact=verifyGen2ReviewArtifact({manifest:JSON.parse(manifestText),candidateBytes,
   sourceCommit:actualHead,reviewDigest:REVIEWED_CANDIDATE_SHA256});
@@ -187,5 +189,5 @@ async function main(){
  // A well-formed NO_GO report succeeds so review CI can display blockers.
  // It is NEVER an approval, regardless of report contents.
 }
-if(process.argv[1]&&fileURLToPath(new URL('file://'+process.argv[1]))===fileURLToPath(import.meta.url))
+if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)
  await main();
