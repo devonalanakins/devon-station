@@ -115,7 +115,7 @@ test('clean-checkout source-only CLI rebuilds ignored outputs but rejects unrevi
  const first=readFileSync(join(f.dir,'deployment/modules.json'),'utf8');
  const candidate=JSON.parse(first);
  assert(Object.hasOwn(candidate,'worker/assistant-evidence.mjs'));
- assert.equal(Object.keys(candidate).length,47);
+ assert.equal(Object.keys(candidate).length,48);
  candidate['worker/state.mjs']+='\n// fabricated stale bundle alteration';
  writeFileSync(join(f.dir,'deployment/modules.json'),JSON.stringify(candidate));
  assert.equal(await verifiedSourceCommit(f.dir),f.commit,'ignored build output is not a tracked-source edit');
