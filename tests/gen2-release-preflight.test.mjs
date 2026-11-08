@@ -68,7 +68,16 @@ test('artifact mismatch, missing evidence and duplicate inputs remain NO_GO',()=
 });
 function artifact(){
  const modules=Object.fromEntries(GEN2_MODULES.map(name=>[name,'// synthetic module '+name]));
- modules['index.mjs']="import {connect} from 'cloudflare:sockets';\nconst assets={};\nexport default createStation(assets,undefined,undefined,connect);\n";
+ const assets=Object.fromEntries(GEN2_ASSETS.map(name=>{
+  const binary=name.endsWith('.png');
+  const bytes=Buffer.from(name==='/index.html'?'<main>"privateDataLoaded":false</main>':name);
+  return [name,{type:binary?'image/png':'text/plain;charset=utf-8',encoding:binary?'base64':'utf8',
+   body:bytes.toString(binary?'base64':'utf8')}];
+ }));
+ modules['index.mjs']="import {connect} from 'cloudflare:sockets';\n"+
+  "import {createStation} from './worker/index.mjs';\n"+
+  "const assets="+JSON.stringify(assets)+";\n"+
+  "export default createStation(assets,undefined,undefined,connect);\n";
  modules['worker/index.mjs']="if(url.pathname.startsWith('/api/assistant/')) return fake;\n";
  modules['worker/assistant-evidence.mjs']="const ASSISTANT_EVIDENCE_ENABLED=true;\n";
  const candidateBytes=Buffer.from(JSON.stringify(modules));
@@ -79,7 +88,7 @@ function artifact(){
   productionVerified:false,
   candidate:{sha256:reviewDigest,moduleCount:48,assetCount:7,
    moduleDigests:Object.fromEntries(GEN2_MODULES.map(name=>[name,hash(modules[name])])),
-   assetDigests:Object.fromEntries(GEN2_ASSETS.map(name=>[name,hash(name)]))}
+   assetDigests:Object.fromEntries(GEN2_ASSETS.map(name=>[name,hash(Buffer.from(assets[name].body,assets[name].encoding))]))}
  };
  return {manifest,candidateBytes,sourceCommit,reviewDigest};
 }
@@ -92,6 +101,9 @@ test('offline artifact reader verifies exact whole-file and per-module hashes',(
  damaged.candidateBytes[10]^=1;
  assert.throws(()=>verifyGen2ReviewArtifact(damaged),/digest mismatch/);
  assert.throws(()=>verifyGen2ReviewArtifact({...value,reviewDigest:hash('different')}),/digest mismatch/);
+ const wrongAsset=artifact();
+ wrongAsset.manifest.candidate.assetDigests['/index.html']=hash('forged asset contents');
+ assert.throws(()=>verifyGen2ReviewArtifact(wrongAsset),/hosted asset digest mismatch/);
  const secret={...value,manifest:{...value.manifest,uploadAuthorized:true}};
  assert.throws(()=>verifyGen2ReviewArtifact(secret),/provenance invalid/);
  const extra=artifact();const decoded=JSON.parse(extra.candidateBytes.toString());decoded['extra.mjs']='unreviewed';
