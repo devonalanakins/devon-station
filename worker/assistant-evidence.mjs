@@ -88,7 +88,7 @@ export async function handleAssistantEvidence({request,url,user,env,transport=fe
  // In particular, "pending" with zero legacy statuses does not mean Actions
  // checks are pending. Neither API proves branch protection or merge authority.
  const legacyStatuses=Array.isArray(status?.statuses)?status.statuses:null;
- const ciStatus=legacyStatuses?.length===0?null:state(status?.state);
+ const ciStatus=legacyStatuses?.length?state(status?.state):null;
  const legacyStatus=legacyStatuses?.length===0?'none_reported':ciStatus===null?'unavailable':ciStatus;
  const runs=Array.isArray(actions?.workflow_runs)?actions.workflow_runs.filter(r=>
   r?.head_sha===pull.headSha&&Number.isSafeInteger(r.id)&&r.id>0
@@ -98,7 +98,7 @@ export async function handleAssistantEvidence({request,url,user,env,transport=fe
   url:'https://github.com/'+project.repository+'/actions/runs/'+r.id,
  })).slice(0,10):null;
  const runsPartial=Array.isArray(actions?.workflow_runs)&&
-  (Number.isSafeInteger(actions.total_count)&&actions.total_count>runs.length||
+  (!Number.isSafeInteger(actions.total_count)||actions.total_count>runs.length||
    actions.workflow_runs.some(r=>r?.head_sha!==pull.headSha||
      !Number.isSafeInteger(r?.id)||r.id<1));
  const checkSourceValid=checks&&Number.isSafeInteger(checks.total_count)&&checks.total_count>=0&&
@@ -111,7 +111,7 @@ export async function handleAssistantEvidence({request,url,user,env,transport=fe
  ).map(c=>({name:c.name.slice(0,100),status:c.status,conclusion:c.conclusion})):null;
  const checksPartial=!!checkSourceRows&&
   (checks.total_count>checkRuns.length||checkSourceRows.length!==checkRuns.length);
- const failedResult=c=>c.status==='completed'&&
+ const failedResult=c=>c.status==='completed'&&c.conclusion!==null&&
   !['success','neutral','skipped'].includes(c.conclusion);
  const checkSummary=!checkRuns?'unavailable':checksPartial?'partial':
   checkRuns.some(failedResult)?'failed':
@@ -142,7 +142,7 @@ export async function handleAssistantEvidence({request,url,user,env,transport=fe
   :!candidates?'Recheck the open pull request list before selecting work.'
   :!pull?'Inspect the approved issue for the next bounded development task.'
   :hasFailure?'Inspect failed exact-head checks on PR #'+pull.number+' before review.'
-  :checkSummary!=='observed_pass'||runsPartial||runs===null||actionsPending
+  :checkSummary!=='observed_pass'||runsPartial||runs===null||actionsPending||ciStatus==='pending'
    ?'Recheck exact-head CI and missing checks for PR #'+pull.number+' before review.'
   :'Review PR #'+pull.number+' and its dependency chain; required checks and merge authority remain unverified.';
  return {
