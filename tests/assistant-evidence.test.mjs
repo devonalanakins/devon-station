@@ -185,3 +185,13 @@ test('unpaginated workflow evidence is explicitly partial when total count is ab
  assert(result.unknowns.includes('workflow_runs_may_be_partial'));
  assert.match(result.nextAction,/Recheck exact-head CI/);
 });
+
+
+test('a failure in a partial check listing remains visibly failed',async()=>{
+ const source={...expected,[root+'/commits/'+head+'/check-runs?per_page=100']:{total_count:4,check_runs:[
+  {name:'failing-check',head_sha:head,status:'completed',conclusion:'failure'}]}};
+ const {app}=fixture({source});const result=await(await app.fetch(get(evidence),env,{})).json();
+ assert.equal(result.exactHeadCI.checkSummary,'failed');
+ assert(result.unknowns.includes('check_runs_partial'));
+ assert.match(result.nextAction,/Inspect failed exact-head checks/);
+});
