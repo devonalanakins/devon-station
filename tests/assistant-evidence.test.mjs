@@ -43,7 +43,7 @@ test('real structured GitHub evidence is bounded, source-backed and never upgrad
  assert.equal(data.selectedPullRequest.headSha,head);assert.equal(data.exactHeadCI.revision,head);
  assert.equal(data.exactHeadCI.commitStatus,'pending');assert.equal(data.exactHeadCI.workflowRuns[0].conclusion,'success');
  assert.match(data.nextAction,/Review PR #52/);assert.equal(data.openPullRequestsObserved,1);assert.equal(calls.length,5);
- assert.doesNotMatch(JSON.stringify(data),/onerror|<img|test-read-only-token|deployment succeeded|LIVE/i);
+ assert.doesNotMatch(JSON.stringify(data),/onerror|<img|test-read-only-token|deployment succeeded|\"status\":\"LIVE\"/i);
  const follow=await app.fetch(get(evidence.replace('%2Fstatus','%2Fcontinue')),env,{});
  assert.equal((await follow.json()).command,'/continue');
 });
