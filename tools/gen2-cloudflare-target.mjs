@@ -132,18 +132,22 @@ export function evaluateGen2CloudflareTarget(snapshot){
  for(const name of NO_REAL_PROVIDER_SECRETS){
   if(targetBindings.has(name))blockers.push('external_provider_secret_present_'+name.toLowerCase());
  }
- // No data migration or privileged mail acceptance is allowed into this
- // initial read-only A0 candidate. Both DBs must exist and be isolated.
- const a=getD1(targetBindings,'DB'),b=getD1(targetBindings,'MAIL_DB');
+ // A0 Assistant-only acceptance requires an independent primary D1. A
+ // separate MAIL_DB is optional while all mail effects remain disabled.
+ // If any mail DB is already bound, it must also be isolated; no extra
+ // database may be provisioned merely to satisfy the read-only preflight.
+ const a=getD1(targetBindings,'DB'),mailPresent=targetBindings.has('MAIL_DB');
+ const b=mailPresent?getD1(targetBindings,'MAIL_DB'):null;
  const upstream=[getD1(prodBindings,'DB'),getD1(prodBindings,'MAIL_DB'),
   getD1(mailBindings,'DB'),getD1(mailBindings,'MAIL_DB')];
- if(!a||!b||a===b||upstream.some(id=>!id)||[a,b].some(id=>upstream.includes(id)))
-  blockers.push('isolated_d1_and_mail_d1_unverified');
+ if(!a||(mailPresent&&!b)||(b&&a===b)||upstream.some(id=>!id)||
+    [a,b].filter(Boolean).some(id=>upstream.includes(id)))
+  blockers.push('isolated_storage_unverified');
  return {
   ...none,blockers:unique(blockers),
   checks:{
    identity:!blockers.includes('worker_identity_mismatch'),
-   independentStorage:!blockers.includes('isolated_d1_and_mail_d1_unverified'),
+   independentStorage:!blockers.includes('isolated_storage_unverified'),
    dedicatedAccess:!blockers.some(x=>x.includes('access_')||x.includes('required_access_')),
    disabledExternalEffects:!blockers.some(x=>x.startsWith('unsafe_or_missing_disabled_flag_')||
      x.startsWith('external_provider_secret_present_')),
