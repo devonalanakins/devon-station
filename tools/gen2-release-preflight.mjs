@@ -60,13 +60,29 @@ export function verifyGen2ReviewArtifact({manifest,candidateBytes,sourceCommit,r
   if(typeof modules[name]!=='string'||hash(modules[name])!==manifest.candidate.moduleDigests[name])
    refusal('candidate module checksum mismatch');
  }
- // A public review tool checks structure; a future privileged uploader MUST
- // independently bind this to reviewed, trusted exact-head code and runtime.
- if(!modules['index.mjs'].startsWith("import {connect} from 'cloudflare:sockets';\n")||
-    !modules['index.mjs'].endsWith("export default createStation(assets,undefined,undefined,connect);\n")||
-    !modules['worker/index.mjs'].includes("if(url.pathname.startsWith('/api/assistant/'))")||
+ // A public review tool checks structural provenance, not authorization.
+ // A future privileged uploader MUST have independently pinned source, runtime,
+ // permission, recovery and approval boundaries.
+ const entry=modules['index.mjs'];
+ const match=entry.match(/^import \{connect\} from 'cloudflare:sockets';\nimport \{createStation\} from '\.\/worker\/index\.mjs';\nconst assets=(\{[^\n]*\});\nexport default createStation\(assets,undefined,undefined,connect\);\n$/);
+ if(!match||!modules['worker/index.mjs'].includes("if(url.pathname.startsWith('/api/assistant/'))")||
     !modules['worker/assistant-evidence.mjs'].includes("ASSISTANT_EVIDENCE_ENABLED"))
   refusal('expected locked entry and capability boundary absent');
+ let assets;
+ try{assets=JSON.parse(match[1]);}catch{refusal('invalid hosted asset listing');}
+ if(!keysEqual(assets,GEN2_ASSETS))refusal('unexpected hosted asset inventory');
+ for(const name of GEN2_ASSETS){
+  const item=assets[name],binary=name.endsWith('.png');
+  if(!keysEqual(item,['type','encoding','body'])||
+     typeof item.type!=='string'||!item.type||
+     typeof item.body!=='string'||item.encoding!==(binary?'base64':'utf8'))
+   refusal('invalid hosted asset metadata: '+name);
+  const bytes=Buffer.from(item.body,item.encoding);
+  if(binary&&bytes.toString('base64')!==item.body)refusal('noncanonical binary asset: '+name);
+  if(hash(bytes)!==manifest.candidate.assetDigests[name])refusal('hosted asset digest mismatch: '+name);
+  if(name==='/index.html'&&!item.body.includes('"privateDataLoaded":false'))
+   refusal('private-data marker missing from hosted shell');
+ }
  return Object.freeze({sourceCommit,reviewDigest,moduleCount:GEN2_MODULES.length,assetCount:GEN2_ASSETS.length,uploadAuthorized:false});
 }
 
