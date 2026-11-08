@@ -7,6 +7,8 @@ for(const name of ['src/foundation.mjs','src/access-scope-bridge.mjs','interop/a
 modules['src/workspace-backup.mjs']=await readFile(resolve(root,'src/workspace-backup.mjs'),'utf8');
 modules['worker/ai-work-execution.mjs']=await readFile(resolve(root,'worker/ai-work-execution.mjs'),'utf8');
 modules['worker/ai-work-api.mjs']=await readFile(resolve(root,'worker/ai-work-api.mjs'),'utf8');
+modules['worker/assistant-evidence.mjs']=await readFile(resolve(root,'worker/assistant-evidence.mjs'),'utf8');
+modules['src/assistant-commands.mjs']=await readFile(resolve(root,'src/assistant-commands.mjs'),'utf8');
 modules['worker/mail-api.mjs']=await readFile(resolve(root,'worker/mail-api.mjs'),'utf8');
 modules['worker/mail-outbox-api.mjs']=await readFile(resolve(root,'worker/mail-outbox-api.mjs'),'utf8');
 modules['worker/mail-drafts-api.mjs']=await readFile(resolve(root,'worker/mail-drafts-api.mjs'),'utf8');
