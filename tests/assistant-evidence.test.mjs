@@ -100,7 +100,7 @@ test('provider redirect, 500, HTML, oversized output and forged run revision are
  assert.equal(data.main,null);assert.equal(data.exactHeadCI.commitStatus,null);
  assert.equal(data.exactHeadCI.checkSummary,'unavailable');
  assert.deepEqual(data.exactHeadCI.workflowRuns,[]);assert(data.unknowns.includes('check_runs_unavailable'));
- assert(data.unknowns.includes('no_workflow_runs_observed'));
+ assert(data.unknowns.includes('workflow_runs_may_be_partial'));
  assert.equal(data.selectedPullRequest.url,'https://github.com/devonalanakins/devon-station/pull/52');
 });
 
