@@ -83,7 +83,7 @@ test('private marker, token-shaped content, malformed SHA and invalid source dat
  const variants=[
   f=>{f.sourceCommit='b'.repeat(39);},
   f=>{f.sourceModules['worker/portfolio.mjs']=f.candidate['worker/portfolio.mjs']=
-   'const secret="ghp_"+"012345678901234567890123456789";';},
+   'const secret="ghp_'+ '012345678901234567890123456789' + '";';},
   f=>{f.sourceModules['worker/portfolio.mjs']=f.candidate['worker/portfolio.mjs']=
    'const data={"privateDataLoaded":true};';},
   f=>{f.candidate=null;},
