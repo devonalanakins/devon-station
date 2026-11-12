@@ -113,6 +113,6 @@ globalThis.StationAssistant=(()=>{
   })();
  }
  // App's initial render precedes this plugin's definition in the single hosted script.
- mount(location.hash.slice(1)||'command');
+ mount(location.hash.slice(1)||'home');
  return {mounted:mount};
 })();

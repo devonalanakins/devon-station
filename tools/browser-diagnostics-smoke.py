@@ -1,3 +1,4 @@
+from browser_nav import open_section
 import os
 """Offline synthetic phone/desktop QA of content-free diagnostics export."""
 from pathlib import Path
@@ -31,7 +32,7 @@ with TemporaryDirectory(prefix='devon-diagnostics-') as temp,sync_playwright() a
  secret='Synthetic-private-draft-TEXT-MUST-NOT-LEAK'
  page.locator('#capture-open').click();page.locator('#capture-text').fill(secret);page.locator('#capture-form button[type=submit]').click()
  page.locator('#local-state').get_by_text('Private storage synced',exact=False).wait_for(timeout=10000,state='attached')
- page.locator('button[data-go="settings"]').first.click()
+ open_section(page, 'settings')
  panel=page.locator('#recovery-health');panel.get_by_text('1 drafts',exact=False).wait_for(timeout=10000,state='attached')
  assert 'revision 1' in panel.inner_text(),panel.inner_text()
  assert secret not in panel.inner_text()

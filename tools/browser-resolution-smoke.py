@@ -1,3 +1,4 @@
+from browser_nav import open_section
 import os
 """Offline in-memory synthetic browser acceptance: safe multi-device reconciliation.
 
@@ -77,7 +78,7 @@ with sync_playwright() as p:
     assert len(state['state']['drafts'])==1
     b=context(viewport={'width':1200,'height':900});pb=page_for(b)
     status(pb,'Private storage connected')
-    pb.locator('button[data-go="inbox"]').first.click()
+    open_section(pb, 'inbox')
     pb.get_by_text('Original capture from phone',exact=True).first.wait_for(timeout=10000)
     capture(pb,'Independent desktop task')
     status(pb,'Private storage synced')
@@ -99,16 +100,16 @@ with sync_playwright() as p:
     clean=context(viewport={'width':1200,'height':900})
     pclean=page_for(clean,clean_state,clean_confirmed)
     status(pclean,'Private storage connected')
-    pclean.locator('button[data-go="inbox"]').first.click()
+    open_section(pclean, 'inbox')
     pclean.get_by_text('Another phone task after desktop changed',exact=True).first.wait_for(timeout=10000)
     assert pclean.locator('#cloud-import').is_hidden()
     # Concurrency: edit the same original item on two sessions, and block
     # reconciliation rather than silently overwriting remote edits.
-    pb.locator('button[data-go="inbox"]').first.click()
+    open_section(pb, 'inbox')
     pb.locator('article.draft').filter(has_text='Original capture from phone').locator('button[data-edit-draft]').click()
     pb.locator('#capture-text').fill('Desktop divergent edit')
     # Keep it unsent until the remote phone has committed another edit.
-    pa.locator('button[data-go="inbox"]').first.click()
+    open_section(pa, 'inbox')
     pa.locator('article.draft').filter(has_text='Original capture from phone').locator('button[data-edit-draft]').click()
     pa.locator('#capture-text').fill('Phone divergent edit')
     pa.locator('#capture-form button[type=submit]').click()
@@ -135,7 +136,7 @@ with sync_playwright() as p:
     assert not pb.locator('#sync-review-dialog').is_visible()
     # The phone still has the previous revision and both the phone and the
     # cloud will now diverge. It can choose the cloud version deliberately.
-    pa.locator('button[data-go="inbox"]').first.click()
+    open_section(pa, 'inbox')
     pa.locator('article.draft').filter(has_text='Phone divergent edit').locator('button[data-edit-draft]').click()
     pa.locator('#capture-text').fill('Phone edits again')
     pa.locator('#capture-form button[type=submit]').click()
@@ -154,13 +155,13 @@ with sync_playwright() as p:
     # the review opens. Confirming the old choices must fail closed.
     cc=context(viewport={'width':1200,'height':900})
     pc=page_for(cc);status(pc,'Private storage connected')
-    pc.locator('button[data-go="inbox"]').first.click()
+    open_section(pc, 'inbox')
     pc.locator('article.draft').filter(has_text='Desktop divergent edit').locator('button[data-edit-draft]').click()
     pc.locator('#capture-text').fill('Cloud version three')
     pc.locator('#capture-form button[type=submit]').click()
     status(pc,'Private storage synced')
     assert state['revision']==7
-    pb.locator('button[data-go="inbox"]').first.click()
+    open_section(pb, 'inbox')
     pb.locator('article.draft').filter(has_text='Desktop divergent edit').locator('button[data-edit-draft]').click()
     pb.locator('#capture-text').fill('Desktop version three')
     pb.locator('#capture-form button[type=submit]').click()

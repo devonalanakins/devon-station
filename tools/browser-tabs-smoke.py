@@ -1,3 +1,4 @@
+from browser_nav import open_section
 import os
 """Offline Chromium simulation of shared localStorage + isolated tab sessionStorage.
 No browser navigation/network is permitted in this sandbox, so same-origin storage
@@ -91,7 +92,7 @@ with sync_playwright() as p:
     # Simulated tab reload: shared storage was last written by B, but A's own
     # sessionStorage persists and must recover A's unsynced draft.
     a_reload=page_for(ctx,shared(b),tab(a));wait(a_reload,'Device changes require review')
-    a_reload.locator('button[data-go="inbox"]').first.click()
+    open_section(a_reload, 'inbox')
     a_reload.get_by_text('Tab A offline divergent',exact=True).first.wait_for(timeout=5000)
     a_reload.locator('#cloud-import').click();wait(a_reload,'Device changes safely merged')
     assert remote['revision']==3

@@ -9,6 +9,13 @@ const {join}=require('node:path');
 
   for(const width of [1440,390,320]){
    const context=await browser.newContext({viewport:{width,height:900},isMobile:width<500,hasTouch:width<500,extraHTTPHeaders:{'Cf-Access-Jwt-Assertion':token()},reducedMotion:'reduce'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+   await page.goto(server.url+'/');await page.locator('.home-hero').waitFor();
+   await page.addScriptTag({content:require('axe-core').source});
+   const homeA11y=await page.evaluate(async()=>(
+    await axe.run(document.querySelector('#view'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa']}})
+   ).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})));
+   if(homeA11y.length)throw Error('Home accessibility at '+width+': '+JSON.stringify(homeA11y));
+   await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
    await page.goto(server.url+'/#workspace');await page.getByText('Workspace loaded. Saved decisions are up to date.').waitFor();
    await page.getByLabel('Action to review').fill('Synthetic browser action '+width);await page.getByRole('button',{name:'Create proposal',exact:true}).click();await page.getByText('Proposal saved. Review it before deciding.').waitFor();
    const article=page.locator('.ws-action').filter({hasText:'Synthetic browser action '+width});await article.getByRole('button',{name:'Review proposal'}).click();
@@ -22,7 +29,32 @@ const {join}=require('node:path');
    await page.getByRole('button',{name:'Recovery acceptance',exact:false}).click();
    // The app's original navigation and capture workflow still coexist.
    await page.getByRole('button',{name:'Quick capture',exact:true}).click();await page.getByLabel('Thought or next action').fill('Retain original capture '+width);await page.locator('#capture-form button[type=submit]').click();await page.getByText('Retain original capture '+width,{exact:true}).waitFor();
-   await page.locator('#nav [data-go=workspace]').click();await page.locator('#ws-summary').waitFor();
+   await page.locator('#nav [data-go=home]').click();await page.locator('.home-hero').waitFor();
+   const firstHomeScroll=await page.locator('#view').evaluate(e=>e.scrollTop);
+   if(firstHomeScroll!==0)throw Error('Home opened at stale scroll position '+width+': '+firstHomeScroll);
+   await page.locator('#toast').waitFor({state:'hidden'});
+   await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
+   await page.locator('#nav [data-go=today]').click();await page.getByRole('heading',{name:'Today',exact:true}).waitFor();
+   const chosen=page.locator('.today-item').filter({hasText:'Retain original capture '+width});
+   await chosen.getByRole('button',{name:'Focus today'}).click();
+   await page.getByText('1 of 3 selected').waitFor();
+   await page.locator('.today-item-actions [aria-pressed=true]').focus();
+   if(!(await page.locator('.today-item-actions [aria-pressed=true]').evaluate(e=>document.activeElement===e)))throw Error('Today focus keyboard focus not retained');
+   await page.addScriptTag({content:require('axe-core').source});
+   const todayA11y=await page.evaluate(async()=>(
+    await axe.run(document.querySelector('#view'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa']}})
+   ).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})));
+   if(todayA11y.length)throw Error('Today accessibility at '+width+': '+JSON.stringify(todayA11y));
+   await page.locator('#toast').waitFor({state:'hidden'});
+   await page.screenshot({path:join(__dirname,'today-'+width+'.png'),fullPage:true});
+   await page.locator('#nav [data-go=home]').click();
+   await page.locator('.home-focus').getByText('Retain original capture '+width).waitFor();
+   if(width<=390){
+    await page.getByRole('button',{name:'More sections'}).click();
+    await page.locator('#palette[open]').waitFor();
+    await page.locator('#palette [data-palette-result=workspace]').click();
+   }else await page.locator('#nav [data-go=workspace]').click();
+   await page.locator('#ws-summary').waitFor();
    if(errors.length)throw Error('page errors '+JSON.stringify(errors));results.push({width,overflow,touchTargets:true,decision:width===320?'rejected':'approved',pageErrors:errors.length});await context.close();
   }
   const oldURL=server.url;await server.close();server=await start(path);const ctx=await browser.newContext({extraHTTPHeaders:{'Cf-Access-Jwt-Assertion':token()}});const page=await ctx.newPage();await page.goto(server.url+'/#workspace');await page.getByText('Workspace loaded. Saved decisions are up to date.').waitFor();if(await page.locator('.ws-action').count()!==3)throw Error('restart recovery failed');
