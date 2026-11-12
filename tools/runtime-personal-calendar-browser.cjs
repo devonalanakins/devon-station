@@ -31,9 +31,11 @@ const {join}=require('node:path');
    });
    const next=new Date(day+'T12:00:00Z');next.setUTCDate(next.getUTCDate()+1);
    const marker='SYNTHETIC_PRIVATE_CALENDAR_'+width+'_XSS_<img src=x onerror=alert(1)>';
+   const followup='SYNTHETIC_PERSONAL_FOLLOWUP_'+width;
    const source={source:'google_calendar_personal',scope:'personal',mode:'read_only',
      observedAt:new Date().toISOString(),requestedDay:day,partial:false,excluded:0,
-     events:[{title:marker,start:{date:day},end:{date:next.toISOString().slice(0,10)},confirmation:'confirmed'}]};
+     events:[{title:marker,start:{date:day},end:{date:next.toISOString().slice(0,10)},confirmation:'confirmed'},
+      {title:followup,start:{date:day},end:{date:next.toISOString().slice(0,10)},confirmation:'confirmed'}]};
    await page.route('**/api/calendar/personal?*',route=>{
     apiCalls++;
     assert.equal(route.request().method(),'GET');
@@ -56,6 +58,32 @@ const {join}=require('node:path');
    assert(overflow<=1,'calendar overflow '+width+': '+overflow);
    await panel.scrollIntoViewIfNeeded();
    await page.screenshot({path:join(__dirname,'personal-calendar-'+width+'.png'),fullPage:false});
+   // Calendar previews are untrusted source records, never autonomous owner tasks.
+   const selected=panel.locator('.calendar-live-event').filter({hasText:followup});
+   const beforeReview=await page.evaluate(()=>localStorage.getItem('devon-station:local:v1')||'');
+   await selected.getByRole('button',{name:'Plan follow-up for '+followup}).click();
+   await page.locator('#capture[open]').waitFor();
+   assert.equal(await page.locator('#capture-text').inputValue(),'Follow up: '+followup);
+   assert.equal(await page.locator('#capture-date').inputValue(),day);
+   assert.match(await page.locator('#capture-source-note').textContent(),/read-only personal calendar provider snapshot/);
+   assert(await page.locator('#capture-source-note').isVisible(),'source review warning must be shown');
+   assert.equal(await page.evaluate(()=>localStorage.getItem('devon-station:local:v1')||''),beforeReview,
+    'opening a provider-derived capture must not persist');
+   await page.locator('#capture').getByRole('button',{name:'Cancel'}).click();
+   assert.equal(await page.evaluate(()=>localStorage.getItem('devon-station:local:v1')||''),beforeReview,
+    'cancel must not persist');
+   await selected.getByRole('button',{name:'Plan follow-up for '+followup}).click();
+   await page.locator('#capture[open]').waitFor();
+   await page.locator('#capture').getByRole('button',{name:'Save local draft'}).click();
+   await page.getByText('Follow up: '+followup,{exact:true}).waitFor();
+   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('devon-station:local:v1')||'{}').drafts??[]);
+   assert(saved.some(d=>d.title==='Follow up: '+followup&&d.planDate===day&&d.area==='Family & Home'),
+    'explicit owner submit must create the planned follow-up through the existing draft system');
+   assert(!saved.some(d=>d.title.includes(marker)),'source event must not be persisted wholesale');
+   await page.locator('#nav [data-go=today]').click();
+   await panel.getByText('No live personal calendar data loaded',{exact:false}).waitFor();
+   await panel.getByRole('button',{name:'Check personal calendar'}).click();
+   await panel.getByText(marker,{exact:true}).waitFor();
    await panel.getByRole('button',{name:'Clear preview'}).click();
    await panel.getByText('No live personal calendar data loaded',{exact:false}).waitFor();
    assert.equal(await panel.getByText(marker,{exact:true}).count(),0,'clear retained event');
@@ -81,7 +109,7 @@ const {join}=require('node:path');
    await panel.getByText('No live personal calendar data loaded',{exact:false}).waitFor();
    assert.equal(await panel.getByText(marker,{exact:true}).count(),0,'reload retained event');
    assert.deepEqual(errors,[]);assert.deepEqual(external,[]);assert.equal(server.externalCalls(),0);
-   results.push({width,optIn:true,disabledDefault:true,textSafe:true,clear:true,denyVisible:true,
+   results.push({width,optIn:true,disabledDefault:true,textSafe:true,reviewedFollowup:true,cancelWithoutWrite:true,explicitSave:true,clear:true,denyVisible:true,
      invalidRejected:true,routeAndReloadDiscard:true,axeViolations:0,overflow,apiCalls});
    await context.close();
   }
