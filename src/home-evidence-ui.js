@@ -1,7 +1,8 @@
 /* Home evidence reads only already-authorized same-origin APIs. No execution or cached secrets. */
 globalThis.StationHomeEvidence=(()=>{
  'use strict';
- let active=null,epoch=0;
+ let active=null,epoch=0,pendingReview=null;
+ const reviewButtons=new WeakMap();
  const get=(root,id)=>root.querySelector('#'+id);
  const text=(tag,value,cls)=>{
   const element=document.createElement(tag);element.textContent=String(value??'');
@@ -18,6 +19,16 @@ globalThis.StationHomeEvidence=(()=>{
   const button=text('button',label);button.type='button';button.dataset.go=route;
   button.className='he-route';return button;
  };
+ // Opaque record IDs never enter URLs, browser storage or displayed copy.
+ const specificReviewButton=(label,route,target)=>{
+  const button=routeButton(label,route);button.dataset.heReview='specific';
+  reviewButtons.set(button,{route,target:Object.freeze({...target})});return button;
+ };
+ // One-time handoff. The destination re-fetches owner-scoped state before presenting a review.
+ function takeReview(route){
+  const selected=pendingReview;pendingReview=null;
+  return selected?.route===route?selected.target:null;
+ }
  async function decisions(slot,run,signal){
   try{
    const scopes=await read('/api/workspaces',signal);
@@ -40,7 +51,10 @@ globalThis.StationHomeEvidence=(()=>{
    if(result.preview.length){
     for(const item of result.preview){
      const entry=document.createElement('div');entry.className='he-attention-item';
-     entry.append(text('strong',item.summary),text('span',item.project+' · Proposal only; no action executed.'));
+     entry.append(text('strong',item.summary),text('span',item.project+' · Proposal only; no action executed.'),
+      specificReviewButton('Review this proposal','workspace',{
+       scopeKind:'personal',scopeId:selected.scope.scopeId,
+       projectId:item.projectId,recordId:item.recordId}));
      detail(slot,entry);
     }
    }else detail(slot,text('p','No proposed actions in this one authorized personal journal. Other scopes are not inspected.','he-uncertainty'));
@@ -134,7 +148,9 @@ globalThis.StationHomeEvidence=(()=>{
     for(const record of summary.reviewPreview){
      const row=document.createElement('div');row.className='he-attention-item';
      const when=record.updatedAt?' · Updated '+new Date(record.updatedAt).toLocaleDateString():'';
-     row.append(text('strong','Plan awaiting review'),text('span',record.projectSlug+when+' · Review in Work before deciding.'));
+     row.append(text('strong','Plan awaiting review'),text('span',record.projectSlug+when+' · Review in Work before deciding.'),
+      specificReviewButton('Review this plan','aiwork',{
+       jobId:record.jobId,projectSlug:record.projectSlug}));
      detail(slot,row);
     }
    }
@@ -161,13 +177,19 @@ globalThis.StationHomeEvidence=(()=>{
  }
  function mounted(section){
   active?.abort();active=null;epoch++;
-  if(!['home','today'].includes(section))return;
+  if(!['home','today'].includes(section)){pendingReview=null;return;}
   const root=document.getElementById('station-home-evidence');if(!root)return;
   root.addEventListener('click',event=>{
+   const button=event.target.closest('button[data-he-review="specific"]');
+   if(button&&root.contains(button)){
+    const selected=reviewButtons.get(button);
+    if(!selected){event.preventDefault();event.stopPropagation();return;}
+    pendingReview=selected;
+   }
    if(event.target.closest('[data-home-evidence-refresh]'))refresh(root);
   });
   refresh(root);
  }
  mounted(location.hash.slice(1)||'home');
- return Object.freeze({mounted});
+ return Object.freeze({mounted,takeReview});
 })();
