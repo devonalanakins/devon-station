@@ -73,7 +73,7 @@ test('specific review handoffs are single use and destination owned',()=>{
  assert.match(ui,/reviewButtons\.get\(button\)/);
  assert.match(ws,/takeReview\?\.\('workspace'\)/);
  assert.match(ws,/selectedReview\.scopeId/);
- assert.match(ws,/action\.status==='proposed'/);
+ assert.match(ws,/a\.status==='proposed'/);
  assert.match(work,/takeReview\?\.\('aiwork'\)/);
  assert.match(work,/current\.state==='review'/);
  assert.match(work,/selectedReview\.jobId/);
