@@ -93,3 +93,18 @@ test('source-only calendar preview retains existing application and release boun
  assert.match(build,/read\('src\/calendar-file-ui.js'\)/);
  assert.doesNotThrow(()=>new Script(app));
 });
+
+
+test('an imported event can only prefill an explicitly reviewed owner capture',()=>{
+ const app=read('src/app.js'),ui=read('src/calendar-file-ui.js'),html=read('src/index.html');
+ assert.match(ui,/const eventActions=new WeakMap\(\)/);
+ assert.match(ui,/eventActions\.get\(button\)/);
+ assert.match(ui,/snapshot\.events\.includes\(selected\)/);
+ assert.match(ui,/openCapture\('Family & Home',null,\{title:'Follow up: '\+selected\.title,planDate:date\}\)/);
+ assert.match(app,/function openCapture\(area,draft=null,prefill=null\)/);
+ assert.match(app,/\$\('#capture-text'\)\.value=draft\?\.title\?\?\(fromFile\?prefill\.title:''\)/);
+ assert.match(app,/\$\('#capture-date'\)\.value=draft\?\.planDate\?\?\(fromFile\?prefill\.planDate:''\)/);
+ assert.match(html,/id="capture-source-note"[^>]*hidden/);
+ assert.match(html,/Nothing has been saved/);
+ assert.doesNotMatch(ui,/persist\(|addDraft\(|saveOwnerState\(|fetch\(|localStorage|sessionStorage/);
+});
