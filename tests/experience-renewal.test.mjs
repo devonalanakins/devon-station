@@ -66,3 +66,11 @@ test('shared visual layer preserves responsive focus and reduced-motion contract
  assert.ok(contrast('#a4b6c8','#070c17')>=7);
  assert.ok(contrast('#071924','#91f0f0')>=7);
 });
+
+test('canonical naming does not disable the existing owner mail safety flow',()=>{
+ const mail=source('src/mail-ui.js');
+ assert.match(mail,/\['Devon Station','DevonStation'\]\.includes\(document\.title\)/);
+ assert.match(mail,/window\.top!==window\.self/);
+ assert.match(mail,/document\.querySelector\('\.app main#view'\)/);
+ assert.match(mail,/document\.getElementById\('station-mail'\)/);
+});
