@@ -11,3 +11,5 @@
 .calendar-live-event span{font-size:11px;color:var(--muted)}
 .calendar-live-event strong{font-size:13px;font-weight:610;overflow-wrap:anywhere}
 .calendar-live-event small{font-size:11px;color:var(--muted)}
+
+.calendar-live-plan{justify-self:start;min-height:44px;margin-top:6px}

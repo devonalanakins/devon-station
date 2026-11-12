@@ -2,6 +2,7 @@
 globalThis.StationPersonalCalendar=(()=>{
  'use strict';
  let pending=null,epoch=0,result=null,error='';
+ const eventActions=new WeakMap();
  const host=()=>document.getElementById('station-personal-calendar');
  const make=(tag,content,cls)=>{
   const node=document.createElement(tag);node.textContent=String(content??'');
@@ -24,9 +25,13 @@ globalThis.StationPersonalCalendar=(()=>{
   if(!result.shown.length)list.append(make('p','No supported events shown. Other calendars and provider pages may contain additional commitments.','muted'));
   for(const event of result.shown){
    const node=document.createElement('article');node.className='calendar-live-event';
+   const action=make('button','Plan follow-up','calendar-live-plan');
+   action.type='button';
+   action.setAttribute('aria-label','Plan follow-up for '+event.title);
+   eventActions.set(action,event);
    node.append(make('span',event.startDay),make('strong',event.title),
     make('small',event.label+(event.spansMultipleDays?' · spans multiple days':'')+
-     (event.confirmation==='tentative'?' · tentative':'')));
+     (event.confirmation==='tentative'?' · tentative':'')),action);
    list.append(node);
   }
   if(result.more)list.append(make('p','Additional or omitted events are not included in this short preview.','tiny muted'));
@@ -79,6 +84,17 @@ globalThis.StationPersonalCalendar=(()=>{
   if(section!=='today')return;
   const root=host();if(!root)return;
   root.querySelector('[data-personal-calendar-check]').addEventListener('click',()=>{void check();});
+  root.addEventListener('click',event=>{
+   const button=event.target.closest('button.calendar-live-plan');
+   if(!button||!root.contains(button)||!result)return;
+   const selected=eventActions.get(button);
+   if(!selected||!result.shown.includes(selected))return;
+   // Provider event text is untrusted. Never persist it without explicit owner review.
+   const today=localDay(),date=selected.startDay<today?today:selected.startDay;
+   openCapture('Family & Home',null,{
+    title:'Follow up: '+selected.title,planDate:date,source:'personal-calendar'
+   });
+  });
   root.querySelector('[data-personal-calendar-clear]').addEventListener('click',()=>{
    pending?.abort();pending=null;epoch++;result=null;error='';draw();
   });

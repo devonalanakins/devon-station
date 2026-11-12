@@ -142,13 +142,16 @@ function openCapture(area,draft=null,prefill=null){
  editingDraft=draft?.id??null;
  if(draft)captureArea=draft.area;else if(AREAS.includes(area))captureArea=area;
  captureOptions();$('#capture-error').textContent='';
- const fromFile=!draft&&prefill&&typeof prefill.title==='string'&&prefill.title.length<=220&&
+ const fromCalendar=!draft&&prefill&&typeof prefill.title==='string'&&prefill.title.length<=220&&
   typeof prefill.planDate==='string'&&planningDate(prefill.planDate)===prefill.planDate;
  const sourceNote=$('#capture-source-note');
- sourceNote.hidden=!fromFile;
- $('#capture-text').value=draft?.title??(fromFile?prefill.title:'');
+ sourceNote.hidden=!fromCalendar;
+ if(fromCalendar)sourceNote.textContent=prefill.source==='personal-calendar'?
+  'Prefilled from a read-only personal calendar provider snapshot. Nothing has been saved. Review the event title and remove sensitive details before saving; owner drafts may sync privately.':
+  'Prefilled from a selected personal calendar file. Nothing has been saved. Review and remove sensitive information before saving; owner drafts may sync privately.';
+ $('#capture-text').value=draft?.title??(fromCalendar?prefill.title:'');
  $('#capture-project').value=draft?.project??'';
- $('#capture-date').value=draft?.planDate??(fromFile?prefill.planDate:'');
+ $('#capture-date').value=draft?.planDate??(fromCalendar?prefill.planDate:'');
  $('#capture-form button[type=submit]').textContent=draft?'Update local draft':'Save local draft';
  $('#capture').showModal();$('#capture-text').focus();
 }

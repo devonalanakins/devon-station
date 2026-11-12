@@ -159,3 +159,15 @@ test('ongoing overnight timed events remain visible, but an event ended at midni
  assert.deepEqual(result.shown.map(x=>x.title),['Overnight']);
  assert.equal(result.shown[0].spansMultipleDays,true);
 });
+
+test('a provider event can only prefill a reviewed owner capture, never write directly',()=>{
+ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+ const ui=read('src/personal-calendar-ui.js'),app=read('src/app.js');
+ assert.match(ui,/const eventActions=new WeakMap\(\)/);
+ assert.match(ui,/result\.shown\.includes\(selected\)/);
+ assert.match(ui,/openCapture\('Family & Home',null,\{/);
+ assert.match(ui,/source:'personal-calendar'/);
+ assert.match(app,/prefill\.source==='personal-calendar'/);
+ assert.match(app,/Nothing has been saved/);
+ assert.doesNotMatch(ui,/persist\(|saveOwnerState\(|addDraft\(|method:'POST'/);
+});
