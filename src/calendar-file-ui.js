@@ -22,7 +22,7 @@ globalThis.StationCalendarPreview=(()=>{
    'This is a partial file snapshot, not live calendar availability.';
   const today=localDay(),agenda=calendarFileAgenda(snapshot,today,7);
   const heading=document.createElement('h4');
-  heading.textContent='Events starting today or in the next 7 days';
+  heading.textContent='Events active today or starting in the next 7 days';
   list.append(heading);
   if(!agenda.shown.length){
    const p=document.createElement('p');p.className='muted';
@@ -33,7 +33,7 @@ globalThis.StationCalendarPreview=(()=>{
    const article=document.createElement('article');article.className='calendar-import-event';
    const date=document.createElement('span');date.textContent=item.startDay===today?'Today':item.startDay;
    const title=document.createElement('strong');title.textContent=item.title;
-   const time=document.createElement('small');time.textContent=item.label+(item.endDay?' · multi-day':'');
+   const time=document.createElement('small');time.textContent=item.label+(item.spansMultipleDays?' · spans multiple days':'');
    article.append(date,title,time);list.append(article);
   }
   if(agenda.more){const p=document.createElement('p');p.className='muted';p.textContent='Additional events in this file are not shown in this compact preview.';list.append(p);}

@@ -44,6 +44,7 @@ function parseEvent(properties){
   const range=(Date.parse(dayFrom(rawEnd.value)+'T00:00:00Z')-Date.parse(start.startDay+'T00:00:00Z'))/86400000;
   if(range>31)return {skipped:'unsupported'};
   start.endDay=dayFrom(rawEnd.value); // exclusive
+  start.spansMultipleDays=range>1;
  }
  const title=decodeSummary(properties.get('SUMMARY')?.value??'');
  return {event:{title,...start}};

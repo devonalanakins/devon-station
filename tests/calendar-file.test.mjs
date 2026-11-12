@@ -24,6 +24,7 @@ test('reads a selected valid iCalendar file into a bounded, explicitly partial s
  assert.deepEqual(snapshot.skipped,{recurrence:1,unsupported:1,cancelled:1});
  assert.equal(snapshot.events[0].title,'Family time, and planning');
  assert.equal(snapshot.events[0].endDay,'2026-11-14');
+ assert.equal(snapshot.events[0].spansMultipleDays,true);
  assert.match(snapshot.events[1].label,/America\/New_York \(file time\)/);
  assert.equal(snapshot.events[1].startDay,'2026-11-12');
  const agenda=calendarFileAgenda(snapshot,'2026-11-12');
@@ -32,6 +33,8 @@ test('reads a selected valid iCalendar file into a bounded, explicitly partial s
  const tomorrow=calendarFileAgenda(snapshot,'2026-11-13',0);
  assert.equal(tomorrow.today.length,2); // multi-day and one-day event
  assert.equal(tomorrow.upcoming.length,0);
+ const single=parsePersonalIcs(vc(event('DTSTART;VALUE=DATE:20261112\r\nDTEND;VALUE=DATE:20261113\r\nSUMMARY:One day only\r\n')));
+ assert.equal(single.events[0].spansMultipleDays,false);
 });
 test('unfolds RFC-style lines and never renders untrusted markup as HTML in UI',()=>{
  const contents=vc(event('DTSTART;VALUE=DATE:20261112\r\nSUMMARY:<img src=x onerror=alert(1)>\r\n  plus a continuation\r\n'));
