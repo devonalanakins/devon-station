@@ -16,14 +16,14 @@ function decodeSummary(value){
 }
 function parseStart(raw){
  if(!raw)return null;
- const {head,value}=raw,parts=head.toUpperCase().split(';');
- const tz=parts.slice(1).find(x=>x.startsWith('TZID='))?.slice(5)||null;
+ const {head,value}=raw,parts=head.split(';'),normalized=parts.map(x=>x.toUpperCase());
+ const tz=parts.slice(1).find(x=>x.toUpperCase().startsWith('TZID='))?.slice(5)||null;
  if(tz&&!/^[A-Za-z0-9_./+\-]{1,64}$/.test(tz))return null;
- if((parts.includes('VALUE=DATE')||/^\d{8}$/.test(value))&&isDay(value)){
+ if((normalized.includes('VALUE=DATE')||/^\d{8}$/.test(value))&&isDay(value)){
   return {startDay:dayFrom(value),label:'All day',allDay:true,endDay:null};
  }
  const m=/^(\d{8})T(\d{2})(\d{2})(\d{2})(Z?)$/.exec(value);
- if(!m||!isDay(m[1])||+m[2]>23||+m[3]>59||+m[4]>59||parts.includes('VALUE=DATE'))return null;
+ if(!m||!isDay(m[1])||+m[2]>23||+m[3]>59||+m[4]>59||normalized.includes('VALUE=DATE'))return null;
  if(m[5]==='Z'){
   if(tz)return null;
   const instant=new Date(Date.UTC(+m[1].slice(0,4),+m[1].slice(4,6)-1,+m[1].slice(6,8),+m[2],+m[3],+m[4]));
