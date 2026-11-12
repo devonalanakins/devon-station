@@ -59,6 +59,6 @@ test('Home and Today share readonly review surfaces and existing navigation, no 
  assert.match(ui,/homePersonalScope\(scopes\)/);
  assert.match(ui,/homePersonalDecisions\(payload,selected.scope\)/);
  assert.match(ui,/\['home','today'\]\.includes\(section\)/);
- assert.match(ui,/routeButton\('Review plans in Work'/);
+ assert.match(ui,/routeButton\(summary\.review\?'Review plans in Work'/);
  assert.doesNotMatch(ui,/localStorage|sessionStorage|\/api\/workspace\/decide|\/api\/ai-work\/jobs\/[^']*\/decision/);
 });
