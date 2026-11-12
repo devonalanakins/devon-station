@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
 
 const source = path => readFileSync(new URL('../'+path, import.meta.url),'utf8');
 const luminance = hex => {
@@ -73,4 +74,11 @@ test('canonical naming does not disable the existing owner mail safety flow',()=
  assert.match(mail,/window\.top!==window\.self/);
  assert.match(mail,/document\.querySelector\('\.app main#view'\)/);
  assert.match(mail,/document\.getElementById\('station-mail'\)/);
+});
+
+test('Assistant view remains parseable in the hosted inline script',()=>{
+ const sourceText=source('src/assistant-ui.js');
+ assert.doesNotThrow(()=>new Script(sourceText));
+ assert.match(sourceText,/Know where things stand\./);
+ assert.doesNotMatch(sourceText,/GENERATION 2 · READ-ONLY ASSISTANT|A0 · Inspection only/);
 });
