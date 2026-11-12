@@ -22,6 +22,7 @@ const {join}=require('node:path');
    const civil=await page.evaluate(()=>{const d=new Date();return String(d.getFullYear()).padStart(4,'0')+
     String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');});
    const day=civil.replaceAll('-','');
+   const civilISO=civil.slice(0,4)+'-'+civil.slice(4,6)+'-'+civil.slice(6,8);
    const nextDate=new Date(civil.slice(0,4)+'-'+civil.slice(4,6)+'-'+civil.slice(6,8)+'T12:00:00Z');nextDate.setUTCDate(nextDate.getUTCDate()+1);
    const next=nextDate.toISOString().slice(0,10).replaceAll('-','');
    const privateMarker='SYNTHETIC_LOCAL_CALENDAR_ONLY_'+width;
@@ -45,7 +46,7 @@ const {join}=require('node:path');
    await selected.getByRole('button',{name:'Plan follow-up for '+privateMarker}).click();
    await page.locator('#capture[open]').waitFor();
    if(await page.locator('#capture-text').inputValue()!=='Follow up: '+privateMarker)throw Error('selected file event did not prefill review title');
-   if(await page.locator('#capture-date').inputValue()!==civil)throw Error('selected calendar date did not prefill owner plan');
+   if(await page.locator('#capture-date').inputValue()!==civilISO)throw Error('selected calendar date did not prefill owner plan');
    if(!(await page.locator('#capture-source-note').isVisible()))throw Error('untrusted calendar prefill needs visible owner review warning');
    if(await page.evaluate(()=>localStorage.getItem('devon-station:local:v1')||'')!==beforeReview)
     throw Error('calendar handoff persisted without explicit submission');
@@ -56,7 +57,7 @@ const {join}=require('node:path');
    await page.locator('#capture').getByRole('button',{name:'Save local draft'}).click();
    await page.getByText('Follow up: '+privateMarker,{exact:true}).waitFor();
    const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('devon-station:local:v1')||'{}').drafts??[]);
-   if(!saved.some(d=>d.title==='Follow up: '+privateMarker&&d.planDate===civil&&d.area==='Family & Home'))
+   if(!saved.some(d=>d.title==='Follow up: '+privateMarker&&d.planDate===civilISO&&d.area==='Family & Home'))
     throw Error('explicit calendar-derived follow-up was not saved through owner capture');
    await page.locator('#nav [data-go=today]').click();
    await panel.getByText(privateMarker).waitFor();
