@@ -1,3 +1,4 @@
+from browser_nav import open_section
 import os
 """Offline Chromium visual and simulated private-state sync QA. No network or live access."""
 from playwright.sync_api import sync_playwright
@@ -45,7 +46,7 @@ with sync_playwright() as p:
             assert seed['state']['drafts'][0]['title']=='Verify cloud sync across devices'
             print('iPhone capture persisted in simulated backend:',seed['revision'])
         else:
-            page.locator('[data-go="inbox"]').first.click()
+            open_section(page, 'inbox')
             page.get_by_text('Verify cloud sync across devices').wait_for(timeout=15000,state='attached')
             print('Desktop independent session loaded the saved draft:',seed['revision'])
         print('Viewport',viewport,'pageErrors',errors,'horizontalOverflow',page.evaluate('document.documentElement.scrollWidth-innerWidth'))

@@ -1,3 +1,4 @@
+from browser_nav import open_section
 import os
 """Offline synthetic browser acceptance for passphrase-protected device recovery.
 
@@ -85,7 +86,7 @@ with TemporaryDirectory(prefix='devon-backup-') as temp, sync_playwright() as p:
         page.locator('#local-state').get_by_text('Private storage synced',exact=False).wait_for(timeout=15000,state="attached")
 
     capture('First protected note')
-    page.locator('button[data-go=settings]').click()
+    open_section(page, 'settings')
     page.locator('#backup-create').click()
     page.locator('#backup-passphrase').fill('A longer personal recovery passphrase')
     page.locator('#backup-repeat').fill('A longer personal recovery passphrase')
@@ -110,7 +111,7 @@ with TemporaryDirectory(prefix='devon-backup-') as temp, sync_playwright() as p:
 
     capture('Second newer cloud note')
     assert state['revision']==2
-    page.locator('button[data-go=settings]').click()
+    open_section(page, 'settings')
     page.locator('#backup-open').click()
     page.locator('#backup-file').set_input_files(str(backup_path))
     page.locator('#backup-passphrase').fill('A longer personal recovery passphrase')
