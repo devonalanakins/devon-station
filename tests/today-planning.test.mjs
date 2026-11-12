@@ -84,7 +84,7 @@ test('calendar file creation requires explicit action and no calendar network ca
  assert.match(html,/id="capture-date" type="date"/);
  assert.match(app,/data-calendar-file/);
  assert.match(app,/calendarFileForCapture\(draft\)/);
- assert.match(app,/No calendar commitments are displayed by this local view/);
+ assert.match(app,/No calendar service is connected/);
  assert.match(app,/No calendar event was created automatically/);
  assert.doesNotMatch(app,/fetch\(['"]https:\/\/calendar|calendar\.events\.insert/);
  assert.doesNotThrow(()=>new Script(app));

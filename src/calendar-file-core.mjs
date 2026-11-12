@@ -18,7 +18,7 @@ function parseStart(raw){
  if(!raw)return null;
  const {head,value}=raw,parts=head.split(';'),normalized=parts.map(x=>x.toUpperCase());
  const tz=parts.slice(1).find(x=>x.toUpperCase().startsWith('TZID='))?.slice(5)||null;
- if(tz&&!/^[A-Za-z0-9_./+\-]{1,64}$/.test(tz))return null;
+ if(tz&&(tz.length>64||tz.includes('..')||!/^[A-Za-z_][A-Za-z0-9_.+\-]*(?:\/[A-Za-z_][A-Za-z0-9_.+\-]*){0,3}$/.test(tz)))return null;
  if((normalized.includes('VALUE=DATE')||/^\d{8}$/.test(value))&&isDay(value)){
   return {startDay:dayFrom(value),label:'All day',allDay:true,endDay:null};
  }
