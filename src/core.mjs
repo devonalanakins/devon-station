@@ -1,5 +1,5 @@
 export const AREAS=['Family & Home','Shinewell','Devon Works','Writing','ANEVUM','Incubator'];
-export const SECTIONS=['command','workspace','inbox','portfolio','works','infrastructure','writing','anevum','reviews','settings','mail','aiwork'];
+export const SECTIONS=['home','today','command','workspace','inbox','portfolio','works','infrastructure','writing','anevum','reviews','settings','mail','aiwork'];
 export const PIPELINE=['Capture','Classify','Scope','Prioritize','Design','Build','Test','Review','Release','Maintain','Archive'];
 export const DEFAULTS={theme:'obsidian',accent:'cyan',density:'compact',motion:'system',contrast:'normal'};
 export function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -31,4 +31,22 @@ export function readTabRecoveryJournal(journal){
  try{if(JSON.stringify(journal).length>200000)return null}catch{return null}
  return journal.state;
 }
+
+/** Owner-selected focus is a local preference, not task completion or a calendar commitment. */
+export function todayCaptures(local){
+ const active=(Array.isArray(local?.drafts)?local.drafts:[]).filter(d=>d?.state!=='Archived'&&/^local:[a-zA-Z0-9-]+$/.test(d?.id));
+ const focus=new Set(Array.isArray(local?.outcomes)?local.outcomes:[]);
+ return {active,focused:active.filter(d=>focus.has(d.id.slice(6))).slice(0,3)};
+}
+/** A deliberate focus edit retains no stale references to archived or missing local drafts. */
+export function changeTodayFocus(local,id){
+ if(typeof id!=='string'||!/^[a-zA-Z0-9-]{1,80}$/.test(id))throw Error('Invalid local focus target.');
+ const active=new Set(todayCaptures(local).active.map(d=>d.id.slice(6)));
+ if(!active.has(id))throw Error('Choose an active local capture.');
+ const selected=[...new Set(Array.isArray(local?.outcomes)?local.outcomes:[])].filter(x=>active.has(x));
+ if(selected.includes(id))return selected.filter(x=>x!==id);
+ if(selected.length>=3)throw Error('Choose up to three focus items. Remove one before adding another.');
+ return [...selected,id];
+}
+
 export function validateProject(p){const missing=['id','name','owner','area','next','gate','source'].filter(k=>!p?.[k]);if(missing.length)throw Error('Missing project fields: '+missing.join(', '));if(!AREAS.includes(p.area))throw Error('Unknown project area');if(!safeURL(p.source))throw Error('Source must be an HTTPS URL without credentials');if(p.repo&&!/^https:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(p.repo))throw Error('Repository must identify one GitHub repository');return true;}
