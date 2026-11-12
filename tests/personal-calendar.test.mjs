@@ -143,3 +143,19 @@ test('invalid local evidence is refused without cross-calendar inference',()=>{
   {events:[{...data.events[0],title:'a'.repeat(181)}]}
  ])assert.throws(()=>personalCalendarAgenda({...data,...change},today),undefined,JSON.stringify(change).slice(0,55));
 });
+
+test('ongoing overnight timed events remain visible, but an event ended at midnight does not',()=>{
+ const day='2026-11-12';
+ const before=new Date('2026-11-11T23:30:00').toISOString();
+ const during=new Date('2026-11-12T02:30:00').toISOString();
+ const ended=new Date('2026-11-12T00:00:00').toISOString();
+ const envelope={source:'google_calendar_personal',scope:'personal',mode:'read_only',
+  requestedDay:day,observedAt:'2026-11-12T14:00:00.000Z',
+  partial:false,excluded:0,events:[
+   {title:'Overnight',start:{dateTime:before},end:{dateTime:during},confirmation:'confirmed'},
+   {title:'Ended at midnight',start:{dateTime:before},end:{dateTime:ended},confirmation:'confirmed'}
+  ]};
+ const result=personalCalendarAgenda(envelope,day);
+ assert.deepEqual(result.shown.map(x=>x.title),['Overnight']);
+ assert.equal(result.shown[0].spansMultipleDays,true);
+});

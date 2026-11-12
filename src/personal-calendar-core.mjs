@@ -18,12 +18,14 @@ export function personalCalendarAgenda(response,day,daysAhead=7){
  for(const item of response.events){
   if(!item||typeof item.title!=='string'||item.title.length>180||
     !['confirmed','tentative'].includes(item.confirmation)||!item.start||!item.end)throw Error('Invalid calendar record.');
-  let startDay,label,endDay=null;
+  let startDay,label,endDay=null,active=false,spansMultipleDays=false;
   if(typeof item.start.date==='string'&&isoDay(item.start.date)&&
     typeof item.end.date==='string'&&isoDay(item.end.date)){
    startDay=item.start.date;endDay=item.end.date;
    if(endDay<=startDay)throw Error('Invalid event date window.');
    label='All day';
+   active=endDay>day;
+   spansMultipleDays=Date.parse(endDay+'T00:00:00Z')-Date.parse(startDay+'T00:00:00Z')>86400000;
   }else if(typeof item.start.dateTime==='string'&&RFC.test(item.start.dateTime)&&
     typeof item.end.dateTime==='string'&&RFC.test(item.end.dateTime)&&
     isoDay(item.start.dateTime.slice(0,10))&&isoDay(item.end.dateTime.slice(0,10))){
@@ -32,10 +34,12 @@ export function personalCalendarAgenda(response,day,daysAhead=7){
       end.getTime()<=start.getTime())throw Error('Invalid timed event window.');
    startDay=localDate(start);
    label=start.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · device local';
+   active=end.getTime()>new Date(day+'T00:00:00').getTime();
+   spansMultipleDays=localDate(end)!==startDay;
   }else throw Error('Mixed or unsupported event date.');
-  if(startDay<=max&&(endDay?endDay>day:startDay>=day))out.push({
+  if(startDay<=max&&active)out.push({
    title:item.title,startDay,endDay,label,confirmation:item.confirmation,
-   spansMultipleDays:!!endDay&&Date.parse(endDay+'T00:00:00Z')-Date.parse(startDay+'T00:00:00Z')>86400000
+   spansMultipleDays
   });
  }
  out.sort((a,b)=>a.startDay.localeCompare(b.startDay)||a.label.localeCompare(b.label)||a.title.localeCompare(b.title));
