@@ -8,6 +8,7 @@ modules['src/workspace-backup.mjs']=await readFile(resolve(root,'src/workspace-b
 modules['worker/ai-work-execution.mjs']=await readFile(resolve(root,'worker/ai-work-execution.mjs'),'utf8');
 modules['worker/ai-work-api.mjs']=await readFile(resolve(root,'worker/ai-work-api.mjs'),'utf8');
 modules['worker/assistant-evidence.mjs']=await readFile(resolve(root,'worker/assistant-evidence.mjs'),'utf8');
+modules['worker/personal-calendar-read.mjs']=await readFile(resolve(root,'worker/personal-calendar-read.mjs'),'utf8');
 modules['src/assistant-commands.mjs']=await readFile(resolve(root,'src/assistant-commands.mjs'),'utf8');
 modules['worker/mail-api.mjs']=await readFile(resolve(root,'worker/mail-api.mjs'),'utf8');
 modules['worker/mail-outbox-api.mjs']=await readFile(resolve(root,'worker/mail-outbox-api.mjs'),'utf8');

@@ -21,7 +21,8 @@ test('hosted packaging removes private inventory, has no embedded private source
  assert(Object.hasOwn(bundle,'worker/assistant-evidence.mjs'));
  assert.match(bundle['worker/index.mjs'],/assistant-evidence\.mjs/);
  assert(Object.hasOwn(bundle,'src/assistant-commands.mjs'));
- assert.equal(Object.keys(bundle).length,48);
+ assert.equal(Object.keys(bundle).length,49);assert(Object.hasOwn(bundle,'worker/personal-calendar-read.mjs'));
+ assert.match(bundle['worker/index.mjs'],/personal-calendar-read\.mjs/);
  assert.match(bundle['index.mjs'],/^import \{connect\} from 'cloudflare:sockets';/);
  const assets=JSON.parse(bundle['index.mjs'].match(/const assets=(.*);\nexport default/s)[1]);
  for(const [name,size] of [['icon-192.png',192],['icon-512.png',512],['apple-touch-icon.png',180]]){

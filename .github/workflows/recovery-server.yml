@@ -82,6 +82,9 @@ jobs:
       - run: node tools/runtime-calendar-file-browser.cjs
         env:
           DS_CHROME: /usr/bin/google-chrome
+      - run: node tools/runtime-personal-calendar-browser.cjs
+        env:
+          DS_CHROME: /usr/bin/google-chrome
       - run: npm run test:runtime:browser
         env:
           DS_CHROME: /usr/bin/google-chrome
@@ -110,6 +113,8 @@ jobs:
             tools/home-evidence-browser-results.json
             tools/calendar-import-*.png
             tools/calendar-import-browser-results.json
+            tools/personal-calendar-*.png
+            tools/personal-calendar-browser-results.json
             tools/browser-results.json
           if-no-files-found: ignore
           retention-days: 7
