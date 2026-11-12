@@ -30,6 +30,8 @@ const {join}=require('node:path');
    // The app's original navigation and capture workflow still coexist.
    await page.getByRole('button',{name:'Quick capture',exact:true}).click();await page.getByLabel('Thought or next action').fill('Retain original capture '+width);await page.locator('#capture-form button[type=submit]').click();await page.getByText('Retain original capture '+width,{exact:true}).waitFor();
    await page.locator('#nav [data-go=home]').click();await page.locator('.home-hero').waitFor();
+   const firstHomeScroll=await page.locator('#view').evaluate(e=>e.scrollTop);
+   if(firstHomeScroll!==0)throw Error('Home opened at stale scroll position '+width+': '+firstHomeScroll);
    await page.locator('#toast').waitFor({state:'hidden'});
    await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
    await page.locator('#nav [data-go=today]').click();await page.getByRole('heading',{name:'Today',exact:true}).waitFor();

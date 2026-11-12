@@ -15,6 +15,7 @@ try{
  const recovered=readTabRecoveryJournal(journal);if(recovered)raw=recovered;
 }catch{}
 let local=restoreLocal(raw,SNAPSHOT.projects),section=SECTIONS.includes(location.hash.slice(1))?location.hash.slice(1):'home',inspected=null;
+const routeScrollPositions=new Map();
 let portfolioFilters={query:'',area:'All',status:'All',priority:'All'},infraFilters={query:'',area:'All',status:'All',type:'All'},inboxFilter='All',captureArea='Devon Works',paletteIndex=-1,toastTimer,editingDraft=null,infraPage=1;
 function notify(text){$('#toast').textContent=text;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,4500)}
 function persist(action){
@@ -39,7 +40,7 @@ function nav(){
  const current=el.querySelector('.nav-item[data-go="'+section+'"]');
  current?.scrollIntoView({block:'nearest',inline:'nearest'});
 }
-function go(s){if(!SECTIONS.includes(s))s='home';section=s;location.hash=s;inspected=null;$('#inspector').hidden=true;render();$('#view').focus({preventScroll:true});}
+function go(s){if(!SECTIONS.includes(s))s='home';const view=$('#view');if(s!==section)routeScrollPositions.set(section,view.scrollTop);section=s;location.hash=s;inspected=null;$('#inspector').hidden=true;render();view.scrollTop=routeScrollPositions.get(s)??0;view.focus({preventScroll:true});}
 function resourceCount(type){return SNAPSHOT.resources.filter(r=>r.type===type).length;}
 function workspace(){return heading('Turn intent into a decision.','Approved projects, proposed actions, and a recoverable decision journal.',tag('Owner scoped'))+'<div id="station-workspace"></div>';}
 function aiwork(){return heading('Work Console','Private jobs, clear boundaries, saved decisions.',tag('Owner only'))+'<section id="station-ai-work" aria-label="AI Work Console"></section>';}
@@ -124,7 +125,7 @@ $('#feedback-open').addEventListener('click',openFeedback);
 $('#capture-open').addEventListener('click',()=>openCapture());$('#search-open').addEventListener('click',openPalette);$('#checkpoint-open').addEventListener('click',()=>window.open(SNAPSHOT.checkpoint,'_blank','noopener,noreferrer'));$('#palette-query').addEventListener('input',palette);
 $('#palette').addEventListener('keydown',e=>{if(!['ArrowDown','ArrowUp','Enter'].includes(e.key))return;const rows=[...document.querySelectorAll('[data-palette-result]')];if(!rows.length)return;e.preventDefault();if(e.key==='Enter'){(document.activeElement.matches('[data-palette-result]')?document.activeElement:rows[Math.max(0,paletteIndex)]).click();return}paletteIndex=(paletteIndex+(e.key==='ArrowDown'?1:-1)+rows.length)%rows.length;rows[paletteIndex].focus();});
 document.addEventListener('keydown',e=>{const typing=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.target.isContentEditable,modal=$('dialog[open]');if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if(!modal)openPalette();return}if(e.key==='Escape'&&!modal&&inspected){$('#inspector').hidden=true;inspected=null;$('#view').focus();return}if(typing||modal)return;if(e.altKey&&/^[0-9]$/.test(e.key)){e.preventDefault();go(SECTIONS[e.key==='0'?9:Number(e.key)-1])}else if(e.key.toLowerCase()==='c'&&!e.metaKey&&!e.ctrlKey){e.preventDefault();openCapture()}else if(e.key==='/'){e.preventDefault();openPalette()}});
-window.addEventListener('hashchange',()=>{const s=location.hash.slice(1);if(SECTIONS.includes(s)&&s!==section){section=s;$('#inspector').hidden=true;render()}});
+window.addEventListener('hashchange',()=>{const s=location.hash.slice(1);if(SECTIONS.includes(s)&&s!==section){const view=$('#view');routeScrollPositions.set(section,view.scrollTop);section=s;inspected=null;$('#inspector').hidden=true;render();view.scrollTop=routeScrollPositions.get(s)??0;view.focus({preventScroll:true});}});
 applyPrefs();render();if(!storageAvailable)$('#local-state').textContent='Session only · export to keep changes';
 
 // A distinct tab can update this device's shared localStorage without updating
