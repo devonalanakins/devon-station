@@ -86,7 +86,7 @@ function artifact(){
   schemaVersion:1,status:'SOURCE_REVIEW_ONLY_NEVER_UPLOAD',
   sourceRepository:REPO,sourceCommit,uploadAuthorized:false,mergeAuthorized:false,
   productionVerified:false,
-  candidate:{sha256:reviewDigest,moduleCount:48,assetCount:7,
+  candidate:{sha256:reviewDigest,moduleCount:49,assetCount:7,
    moduleDigests:Object.fromEntries(GEN2_MODULES.map(name=>[name,hash(modules[name])])),
    assetDigests:Object.fromEntries(GEN2_ASSETS.map(name=>[name,hash(Buffer.from(assets[name].body,assets[name].encoding))]))}
  };
@@ -95,7 +95,7 @@ function artifact(){
 test('offline artifact reader verifies exact whole-file and per-module hashes',()=>{
  const value=artifact(),ok=verifyGen2ReviewArtifact(value);
  assert.equal(ok.uploadAuthorized,false);
- assert.equal(ok.moduleCount,48);
+ assert.equal(ok.moduleCount,49);
  assert.equal(ok.reviewDigest,value.reviewDigest);
  const damaged={...value,candidateBytes:Buffer.from(value.candidateBytes)};
  damaged.candidateBytes[10]^=1;

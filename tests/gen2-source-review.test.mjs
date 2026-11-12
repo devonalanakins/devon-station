@@ -31,8 +31,8 @@ function fixture(){
 }
 const build=f=>createGen2Review(f);
 test('Generation 2 review has fixed, distinct source and hosted asset inventories',()=>{
- assert.equal(GEN2_MODULES.length,48);
- assert.equal(new Set(GEN2_MODULES).size,48);
+ assert.equal(GEN2_MODULES.length,49);
+ assert.equal(new Set(GEN2_MODULES).size,49);
  assert.equal(GEN2_ASSETS.length,7);
  assert.equal(new Set(GEN2_ASSETS).size,7);
 });
@@ -45,7 +45,7 @@ test('pure review bytes, provenance and checksums are deterministic and never im
  assert.equal(first.manifest.uploadAuthorized,false);
  assert.equal(first.manifest.mergeAuthorized,false);
  assert.equal(first.manifest.productionVerified,false);
- assert.equal(first.manifest.candidate.moduleCount,48);
+ assert.equal(first.manifest.candidate.moduleCount,49);
  assert.equal(first.manifest.candidate.assetCount,7);
  assert.equal(first.manifest.candidate.sha256,sha(first.files['candidate.modules.json']));
  assert.equal(sha(first.files['manifest.json']),first.files.SHA256SUMS.trim().split('\n')[1].slice(0,64));
@@ -53,7 +53,7 @@ test('pure review bytes, provenance and checksums are deterministic and never im
   const match=/^([a-f0-9]{64})  ([a-z0-9.-]+)$/.exec(line);
   assert(match);assert.equal(match[1],sha(first.files[match[2]]));
  }
- assert.equal(Object.keys(JSON.parse(first.files['candidate.modules.json'])).length,48);
+ assert.equal(Object.keys(JSON.parse(first.files['candidate.modules.json'])).length,49);
 });
 test('source review refuses missing, extra or tampered code regardless of a self-consistent candidate',()=>{
  const cases=[
@@ -64,6 +64,7 @@ test('source review refuses missing, extra or tampered code regardless of a self
   f=>{f.candidate['worker/access.mjs']+='// weaker auth';f.sourceModules['worker/access.mjs']+='// weaker auth';},
   f=>{f.candidate['worker/index.mjs']=f.sourceModules['worker/index.mjs']='// forged source';},
   f=>{f.candidate['worker/assistant-evidence.mjs']=f.sourceModules['worker/assistant-evidence.mjs']='no feature flag';},
+   f=>{f.candidate['worker/personal-calendar-read.mjs']=f.sourceModules['worker/personal-calendar-read.mjs']='no owner grant';},
  ];
  for(const edit of cases){const f=fixture();edit(f);assert.throws(()=>build(f),/Generation 2 review refused/);}
 });

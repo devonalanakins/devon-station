@@ -17,6 +17,7 @@ export const GEN2_MODULES=Object.freeze([
  'foundation/interop/approved-portfolio.mjs','src/workspace-backup.mjs',
  'worker/ai-work-execution.mjs','worker/ai-work-api.mjs',
  'worker/assistant-evidence.mjs','src/assistant-commands.mjs',
+  'worker/personal-calendar-read.mjs',
  'worker/mail-api.mjs','worker/mail-drafts-api.mjs','worker/mail-outbox-api.mjs',
  ...['mail-onboarding.mjs','mail-core.mjs','mail-readonly-service.mjs',
   'mail-imap-readonly.mjs','mail-imap-transport.mjs','mail-mime-text.mjs',
@@ -52,7 +53,7 @@ const sourceOnly=bytes=>{
  */
 export function createGen2Review({candidate,sourceCommit,sourceModules,assetFiles}){
  if(!SHA.test(sourceCommit))refuse('unverified source commit');
- if(GEN2_MODULES.length!==48||new Set(GEN2_MODULES).size!==48)refuse('pinned module inventory invalid');
+ if(GEN2_MODULES.length!==49||new Set(GEN2_MODULES).size!==49)refuse('pinned module inventory invalid');
  if(!sameKeys(candidate,GEN2_MODULES)||!sameKeys(sourceModules,GEN2_MODULES.filter(x=>x!=='index.mjs')))
   refuse('unexpected or incomplete module inventory');
  if(!sameKeys(assetFiles,GEN2_ASSETS))refuse('unexpected or incomplete assets');
@@ -66,6 +67,10 @@ export function createGen2Review({candidate,sourceCommit,sourceModules,assetFile
     !candidate['worker/assistant-evidence.mjs'].includes("ASSISTANT_EVIDENCE_ENABLED")||
     !candidate['worker/assistant-evidence.mjs'].includes("parseAssistantCommand"))
   refuse('read-only Assistant route or authorization source missing');
+  if(!candidate['worker/index.mjs'].includes("'/api/calendar/'")||
+     !candidate['worker/personal-calendar-read.mjs'].includes('PERSONAL_CALENDAR_APPROVED')||
+     !candidate['worker/personal-calendar-read.mjs'].includes('PERSONAL_CALENDAR_OWNER_SUB'))
+    refuse('read-only personal calendar scope or owner gate missing');
  const entry=candidate['index.mjs'];
  if(typeof entry!=='string')refuse('Worker entry is not text');
  const match=entry.match(/^import \{connect\} from 'cloudflare:sockets';\nimport \{createStation\} from '\.\/worker\/index\.mjs';\nconst assets=(\{[^\n]*\});\nexport default createStation\(assets,undefined,undefined,connect\);\n$/);
@@ -134,7 +139,7 @@ async function main(){
  for(const [name,contents] of Object.entries(files))
   await writeFile(join(destination,name),contents,{flag:'w'});
  console.log('Generation 2 SOURCE-ONLY review. Git commit '+sourceCommit);
- console.log('48 module candidate SHA-256 '+manifest.candidate.sha256);
+ console.log('49 module source-only candidate SHA-256 '+manifest.candidate.sha256);
  console.log('No uploader, credentials, deployment, merge, migration, fallback switch or production authority.');
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)
