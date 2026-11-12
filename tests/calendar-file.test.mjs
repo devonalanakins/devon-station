@@ -108,3 +108,31 @@ test('an imported event can only prefill an explicitly reviewed owner capture',(
  assert.match(html,/Nothing has been saved/);
  assert.doesNotMatch(ui,/persist\(|addDraft\(|saveOwnerState\(|fetch\(|localStorage|sessionStorage/);
 });
+
+
+test('a cancellation or invitation is not mistaken for an active personal calendar snapshot',()=>{
+ const e=event('DTSTART;VALUE=DATE:20261112\r\nSUMMARY:Not an active booking\r\n');
+ const withMethod=method=>vc(e).replace('VERSION:2.0\r\n','VERSION:2.0\r\nMETHOD:'+method+'\r\n');
+ for(const method of ['CANCEL','REQUEST','REPLY','ADD','REFRESH','COUNTER','DECLINECOUNTER','X-OTHER']){
+  assert.throws(()=>parsePersonalIcs(withMethod(method)),/scheduling message, not an exported calendar snapshot/i,method);
+ }
+ assert.equal(parsePersonalIcs(withMethod('PUBLISH')).events.length,1);
+ assert.equal(parsePersonalIcs(vc(e)).events.length,1);
+ // A cancellation can omit VEVENT STATUS; the outer method is still authoritative.
+ const bareCancel=vc(e).replace('VERSION:2.0\r\n','METHOD:CANCEL\r\nVERSION:2.0\r\n');
+ assert.throws(()=>parsePersonalIcs(bareCancel),/scheduling message/i);
+ assert.throws(()=>parsePersonalIcs(vc(e)+'METHOD:CANCEL\r\n'),/outside its root/i);
+});
+test('calendar-level method, scale, and version cannot be ambiguous or mislocated',()=>{
+ const e=event('DTSTART;VALUE=DATE:20261112\r\nSUMMARY:Private synthetic reminder\r\n');
+ const file=vc(e);
+ const add=header=>file.replace('VERSION:2.0\r\n','VERSION:2.0\r\n'+header+'\r\n');
+ assert.equal(parsePersonalIcs(add('CALSCALE:GREGORIAN')).events.length,1);
+ assert.equal(parsePersonalIcs(add('METHOD:PUBLISH')).events.length,1);
+ for(const header of ['METHOD:PUBLISH\r\nMETHOD:PUBLISH','METHOD:REQUEST\r\nMETHOD:PUBLISH',
+  'CALSCALE:JULIAN','CALSCALE:GREGORIAN\r\nCALSCALE:GREGORIAN','VERSION:2.0']){
+  assert.throws(()=>parsePersonalIcs(add(header)),undefined,header);
+ }
+ assert.throws(()=>parsePersonalIcs(vc(event('METHOD:CANCEL\r\nDTSTART;VALUE=DATE:20261112\r\nSUMMARY:Misplaced\r\n'))),/outside its root/i);
+ assert.throws(()=>parsePersonalIcs(file+'X-TRAILING:noise\r\n'),/outside its root/i);
+});

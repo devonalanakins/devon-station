@@ -75,6 +75,11 @@ const {join}=require('node:path');
    await panel.getByText(privateMarker).waitFor(); // memory-only until reload
    await panel.getByRole('button',{name:'Clear calendar preview'}).click();
    await panel.getByText('No personal calendar file selected.',{exact:false}).waitFor();
+   // METHOD:CANCEL may omit STATUS:CANCELLED; do not mislabel a cancellation as an appointment.
+   const cancellation=file.replace('VERSION:2.0\r\n','VERSION:2.0\r\nMETHOD:CANCEL\r\n');
+   await panel.locator('#calendar-import-file').setInputFiles({name:'cancel.ics',mimeType:'text/calendar',buffer:Buffer.from(cancellation)});
+   await panel.getByText('This file is a scheduling message, not an exported calendar snapshot.',{exact:false}).waitFor();
+   if(await panel.locator('.calendar-import-event').count())throw Error('cancelled invitation shown as active calendar event');
    if(await panel.getByText(privateMarker).count())throw Error('clear retained event');
    await panel.locator('#calendar-import-file').setInputFiles({name:'unsupported.txt',mimeType:'text/plain',buffer:Buffer.from(file)});
    await panel.getByText('Choose a nonempty personal .ics file smaller than 256 KB.',{exact:false}).waitFor();
@@ -84,7 +89,7 @@ const {join}=require('node:path');
    await panel.getByText('No personal calendar file selected.',{exact:false}).waitFor();
    if((await panel.textContent()).includes(privateMarker))throw Error('private file snapshot survived reload');
    if(errors.length||external.length||server.externalCalls())throw Error('script or external call '+JSON.stringify({errors,external,count:server.externalCalls()}));
-   results.push({width,localPreview:true,recurrenceOmitted:true,htmlSafe:true,explicitFollowupReview:true,cancelHasNoWrite:true,submitSavesCapture:true,clearAndReload:true,overflow,axe:0,externalCalls:0});
+   results.push({width,localPreview:true,recurrenceOmitted:true,schedulingMessageRejected:true,htmlSafe:true,explicitFollowupReview:true,cancelHasNoWrite:true,submitSavesCapture:true,clearAndReload:true,overflow,axe:0,externalCalls:0});
    await context.close();
   }
   writeFileSync(join(__dirname,'calendar-import-browser-results.json'),JSON.stringify(results,null,2));

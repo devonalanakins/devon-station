@@ -62,7 +62,7 @@ export function parsePersonalIcs(source){
   }else lines.push(line);
  }
  const stack=[],events=[],skipped={recurrence:0,unsupported:0,cancelled:0};
- let seenRoot=false,seenVersion=false,eventCount=0,properties=null;
+ let seenRoot=false,seenVersion=false,eventCount=0,properties=null,rootMethod=null,rootScale=null;
  for(const line of lines){
   if(!line)continue;
   const sep=line.indexOf(':');if(sep<=0)throw Error('Calendar file contains an invalid property.');
@@ -87,9 +87,24 @@ export function parsePersonalIcs(source){
    }
    continue;
   }
-  if(stack.length===1&&stack[0]==='VCALENDAR'&&name==='VERSION'){
-   if(value!=='2.0')throw Error('Only iCalendar version 2.0 is supported.');
-   seenVersion=true;
+  if(seenRoot&&!stack.length)throw Error('Calendar contains properties outside its root.');
+  if(name==='METHOD'&&!(stack.length===1&&stack[0]==='VCALENDAR'))
+   throw Error('Calendar scheduling method is outside its root.');
+  if(stack.length===1&&stack[0]==='VCALENDAR'){
+   if(name==='VERSION'){
+    if(seenVersion||value!=='2.0')throw Error('Only one iCalendar version 2.0 is supported.');
+    seenVersion=true;
+   }
+   if(name==='CALSCALE'){
+    if(rootScale!==null||value.toUpperCase()!=='GREGORIAN')throw Error('Unsupported or repeated calendar scale.');
+    rootScale='GREGORIAN';
+   }
+   if(name==='METHOD'){
+    if(rootMethod!==null)throw Error('Calendar contains repeated scheduling methods.');
+    rootMethod=value.toUpperCase();
+    // RFC 5546 scheduling messages (including CANCEL without STATUS) are not event snapshots.
+    if(rootMethod!=='PUBLISH')throw Error('This file is a scheduling message, not an exported calendar snapshot.');
+   }
   }
   if(stack.at(-1)==='VEVENT'&&properties&&['SUMMARY','DTSTART','DTEND','RRULE','RDATE','EXDATE','RECURRENCE-ID','STATUS'].includes(name)){
    if(properties.has(name))throw Error('Calendar event contains duplicate fields.');
