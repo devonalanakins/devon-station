@@ -11,6 +11,13 @@ const fail = (code,status=400)=>{const err=new Error(code);err.status=status;err
 const plain = x=>x&&typeof x==='object'&&!Array.isArray(x);
 const limitedText=(x,max,field,min=0)=>{if(typeof x!=='string'||x.length>max||x.trim().length<min||/\u0000/.test(x)||secretPattern.test(x)||sensitivePattern.test(x))fail('invalid_'+field);return x.trim();};
 const timestamp=x=>{if(typeof x!=='string'||x.length>35||!/^\d{4}-\d\d-\d\dT/.test(x)||!Number.isFinite(Date.parse(x)))fail('invalid_timestamp');return x;};
+const planDay=x=>{
+ if(typeof x!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(x))fail('invalid_planning_date');
+ const [y,m,d]=x.split('-').map(Number);
+ const days=[31,((y%4===0&&y%100!==0)||y%400===0)?29:28,31,30,31,30,31,31,30,31,30,31];
+ if(y<2000||y>2199||m<1||m>12||d<1||d>days[m-1])fail('invalid_planning_date');
+ return x;
+};
 const unique=(items)=>{const ids=new Set();for(const x of items){if(ids.has(x.id))fail('duplicate_item_id');ids.add(x.id);}};
 export function emptyState(){return {version:1,prefs:{...DEFAULTS},drafts:[],feedback:[],outcomes:[],history:[]};}
 export function validateOwnerState(raw){
@@ -25,6 +32,7 @@ export function validateOwnerState(raw){
   if(x.project!=null||x.destination!=null)fail('external_project_link_requires_source_sync');
   const d={id:x.id,title:limitedText(x.title,500,'draft',2),area:x.area,project:null,destination:null,state:x.state,createdAt:timestamp(x.createdAt)};
   if(x.updatedAt!=null)d.updatedAt=timestamp(x.updatedAt);
+  if(x.planDate!=null)d.planDate=planDay(x.planDate);
   return d;
  });unique(drafts);
  const feedback=raw.feedback.map(x=>{
