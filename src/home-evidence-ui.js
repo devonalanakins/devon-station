@@ -29,9 +29,23 @@ globalThis.StationHomeEvidence=(()=>{
   if(response.status===503)throw {kind:'unavailable'};
   if(!response.ok||!response.headers.get('Content-Type')?.toLowerCase().includes('application/json')||
      Number(response.headers.get('Content-Length'))>131072)throw {kind:'invalid'};
-  const body=await response.text();
-  if(body.length>131072)throw {kind:'invalid'};
-  try{return JSON.parse(body);}catch{throw {kind:'invalid'};}
+  // Reject oversized responses while reading: an untrusted proxy must not force
+  // allocation of an unbounded body before the Content-Length check.
+  const reader=response.body?.getReader();
+  if(!reader)throw {kind:'invalid'};
+  let size=0;const chunks=[];
+  try{
+   while(true){
+    const {done,value}=await reader.read();if(done)break;
+    size+=value.byteLength;
+    if(size>131072){await reader.cancel();throw {kind:'invalid'};}
+    chunks.push(value);
+   }
+  }finally{reader.releaseLock();}
+  const bytes=new Uint8Array(size);let offset=0;
+  for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
+  catch{throw {kind:'invalid'};}
  }
  const live=(slot,run)=>run===epoch&&slot.isConnected;
  async function project(slot,run,signal){
