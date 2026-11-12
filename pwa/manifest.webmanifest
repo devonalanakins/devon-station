@@ -1,13 +1,13 @@
 {
   "id": "/",
-  "name": "Devon Station",
-  "short_name": "Devon Station",
-  "description": "Private owner workspace",
+  "name": "DevonStation",
+  "short_name": "DevonStation",
+  "description": "Private, owner-controlled personal operating workspace",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#080b10",
-  "theme_color": "#080b10",
+  "background_color": "#070c17",
+  "theme_color": "#070c17",
   "icons": [
     {
       "src": "/icons/icon-192.png",
