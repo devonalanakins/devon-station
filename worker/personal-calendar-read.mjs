@@ -15,7 +15,7 @@ function eventDate(raw){
  if(!raw||typeof raw!=='object'||Array.isArray(raw))return null;
  if(Object.keys(raw).includes('date')&&Object.keys(raw).includes('dateTime'))return null;
  if(typeof raw.date==='string'&&dayDate(raw.date))return {date:raw.date};
- if(typeof raw.dateTime==='string'&&RFC.test(raw.dateTime)&&Number.isFinite(Date.parse(raw.dateTime)))
+ if(typeof raw.dateTime==='string'&&RFC.test(raw.dateTime)&&dayDate(raw.dateTime.slice(0,10))&&Number.isFinite(Date.parse(raw.dateTime)))
   return {dateTime:raw.dateTime};
  return null;
 }

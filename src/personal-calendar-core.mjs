@@ -25,7 +25,8 @@ export function personalCalendarAgenda(response,day,daysAhead=7){
    if(endDay<=startDay)throw Error('Invalid event date window.');
    label='All day';
   }else if(typeof item.start.dateTime==='string'&&RFC.test(item.start.dateTime)&&
-    typeof item.end.dateTime==='string'&&RFC.test(item.end.dateTime)){
+    typeof item.end.dateTime==='string'&&RFC.test(item.end.dateTime)&&
+    isoDay(item.start.dateTime.slice(0,10))&&isoDay(item.end.dateTime.slice(0,10))){
    const start=new Date(item.start.dateTime),end=new Date(item.end.dateTime);
    if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||
       end.getTime()<=start.getTime())throw Error('Invalid timed event window.');

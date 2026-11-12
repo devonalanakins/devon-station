@@ -7,7 +7,8 @@ import {verifyApprovedRelease,verifyReviewCandidate} from './comms-acceptance-up
 const source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const candidate=JSON.parse(source('deployment/modules.json'));
 const keys=Object.keys(candidate);
-assert.equal(keys.length,48,'Generation 2 candidate must have reviewed 48-module graph');
+assert.equal(keys.length,49,'Generation 2 source-only candidate has 49 modules and is not approved for release');
+assert(keys.includes('worker/personal-calendar-read.mjs'),'calendar module is included but has no approved release authority');
 assert(keys.includes('worker/assistant-evidence.mjs'),'assistant evidence source must be bundled');
 assert(keys.includes('worker/access.mjs')&&keys.includes('worker/mail-api.mjs'));
 assert.match(candidate['worker/index.mjs'],/assistant-evidence\.mjs/);
@@ -28,4 +29,4 @@ assert.throws(()=>verifyReviewCandidate({manifest,candidateBytes,expectedSha:sou
  /DS011 acceptance refused: module inventory differs from reviewed build/);
 assert.throws(()=>verifyApprovedRelease({manifest,candidateBytes,expectedSha:sourceCommit}),
  /DS011 acceptance refused: release is outside the immutable owner-approved source SHA/);
-console.log('PASS: 48-module assistant source refuses both RB01 review builder and immutable protected mail uploader. No package or deployment authorized.');
+console.log('PASS: 49-module unapproved assistant/calendar source refuses RB01 review builder and immutable protected mail uploader. No package or deployment authorized.');
