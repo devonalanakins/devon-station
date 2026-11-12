@@ -1,5 +1,5 @@
 const {chromium}=require('playwright');
-const {mkdtempSync,rmSync,writeFileSync}=require('node:fs');
+const {mkdtempSync,rmSync,writeFileSync,readFileSync}=require('node:fs');
 const {tmpdir}=require('node:os');
 const {join}=require('node:path');
 (async()=>{
@@ -8,7 +8,7 @@ const {join}=require('node:path');
  try{browser=await chromium.launch({executablePath:process.env.DS_CHROME,args:['--no-sandbox','--disable-dev-shm-usage'],headless:true});const results=[];
 
   for(const width of [1440,390,320]){
-   const context=await browser.newContext({viewport:{width,height:900},isMobile:width<500,hasTouch:width<500,extraHTTPHeaders:{'Cf-Access-Jwt-Assertion':token()},reducedMotion:'reduce'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+   const context=await browser.newContext({viewport:{width,height:900},isMobile:width<500,hasTouch:width<500,acceptDownloads:true,extraHTTPHeaders:{'Cf-Access-Jwt-Assertion':token()},reducedMotion:'reduce'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(server.url+'/');await page.locator('.home-hero').waitFor();
    await page.addScriptTag({content:require('axe-core').source});
    const homeA11y=await page.evaluate(async()=>(
@@ -28,7 +28,7 @@ const {join}=require('node:path');
    await page.getByRole('button',{name:'Portable workspace',exact:false}).click();if(await page.locator('.ws-action').count()!==0)throw Error('project filtering failed');
    await page.getByRole('button',{name:'Recovery acceptance',exact:false}).click();
    // The app's original navigation and capture workflow still coexist.
-   await page.getByRole('button',{name:'Quick capture',exact:true}).click();await page.getByLabel('Thought or next action').fill('Retain original capture '+width);await page.locator('#capture-form button[type=submit]').click();await page.getByText('Retain original capture '+width,{exact:true}).waitFor();
+   await page.getByRole('button',{name:'Quick capture',exact:true}).click();await page.getByLabel('Thought or next action').fill('Retain original capture '+width);await page.getByLabel('Optional planning date').fill('2026-12-31');await page.locator('#capture-form button[type=submit]').click();await page.getByText('Retain original capture '+width,{exact:true}).waitFor();
    await page.locator('#nav [data-go=home]').click();await page.locator('.home-hero').waitFor();
    const firstHomeScroll=await page.locator('#view').evaluate(e=>e.scrollTop);
    if(firstHomeScroll!==0)throw Error('Home opened at stale scroll position '+width+': '+firstHomeScroll);
@@ -36,6 +36,13 @@ const {join}=require('node:path');
    await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
    await page.locator('#nav [data-go=today]').click();await page.getByRole('heading',{name:'Today',exact:true}).waitFor();
    const chosen=page.locator('.today-item').filter({hasText:'Retain original capture '+width});
+   const prepared=page.waitForEvent('download');
+   await chosen.getByRole('button',{name:'Calendar file'}).click();
+   const file=await prepared;
+   if(file.suggestedFilename()!=='devonstation-plan-2026-12-31.ics')throw Error('Incorrect explicit calendar filename');
+   const content=readFileSync(await file.path(),'utf8');
+   if(!content.includes('DTSTART;VALUE=DATE:20261231')||!content.includes('TRANSP:TRANSPARENT')||!content.includes('STATUS:TENTATIVE'))throw Error('Calendar file is not a safe all-day plan');
+   if(!content.includes('Retain original capture '+width))throw Error('Export does not match the selected capture');
    await chosen.getByRole('button',{name:'Focus today'}).click();
    await page.getByText('1 of 3 selected').waitFor();
    await page.locator('.today-item-actions [aria-pressed=true]').focus();
