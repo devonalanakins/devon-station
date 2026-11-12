@@ -274,7 +274,7 @@
     const securePage=location.protocol==='https:'||
       (location.protocol==='http:'&&['127.0.0.1','localhost'].includes(location.hostname));
     if(!securePage||window.top!==window.self||
-       document.title!=='Devon Station'||!document.querySelector('.app main#view')||
+       !['Devon Station','DevonStation'].includes(document.title)||!document.querySelector('.app main#view')||
        !document.getElementById('station-mail')){
       diagnostic('blocked','Open the signed-in DevonStation workspace, not the Cloudflare Access sign-in page.');return;
     }

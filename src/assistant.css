@@ -29,3 +29,15 @@
 .as-uncertainty,.as-limitation{font-size:12px;color:var(--muted);margin:12px 0 0}
 @media(max-width:600px){.as-heading{flex-direction:column;gap:6px}.as-heading p{margin-bottom:12px}.as-compose{flex-direction:column}.as-compose button{width:100%}.as-facts{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.station-assistant *, .station-assistant *:before{scroll-behavior:auto;transition:none!important;animation:none!important}}
+
+
+/* Identity 01 assistant surface polish; styling only, no action/state changes. */
+.station-assistant{border-color:#4e7e8c88;border-radius:22px;box-shadow:inset 0 1px #dcf9ff16,0 12px 35px #050b1790}
+.station-assistant:before{background:linear-gradient(90deg,#7ee9eb,transparent 55%,#b7a1f6);opacity:.75}
+.as-heading h2{font-weight:640;letter-spacing:-.038em}
+.as-heading p{font-size:13px;line-height:1.65;color:#b6c9db}
+.as-mode{border-color:#55768f76;color:#c5dce7;background:#152d3b66}
+#as-project,#as-command{background:#0b1829;border-color:#4a667f;border-radius:12px}
+.as-fact{background:#0d2334;border-color:#365871;border-radius:13px}
+.as-next{border-color:#7ee9eb;background:#15333a8f}
+@media(max-width:600px){.station-assistant{padding:18px}.as-heading h2{font-size:25px}}

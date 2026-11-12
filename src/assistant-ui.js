@@ -64,7 +64,7 @@ globalThis.StationAssistant=(()=>{
   if(!root){root=document.createElement('section');root.id='station-assistant';root.className='station-assistant';
    root.setAttribute('aria-label','Assistant project evidence');view.prepend(root);}
   root.dataset.ready='1';
-  root.innerHTML='<div class="as-heading"><div><span class="eyebrow">GENERATION 2 · READ-ONLY ASSISTANT</span><h2>Ask about active source.</h2><p>Choose an approved project. Inspect source evidence before taking action.</p></div><span class="as-mode">A0 · Inspection only</span></div>'+
+  root.innerHTML='<div class="as-heading"><div><span class="eyebrow">PROJECT EVIDENCE · OWNER VIEW</span><h2>Know where things stand.</h2><p>Choose a project to review verified status, unknowns and its next step.</p></div><span class="as-mode">Read-only · No actions run</span></div>'+
    '<form id="as-form"><label for="as-project">Approved project</label><select id="as-project" required disabled><option value="">Loading permissions…</option></select>'+
    '<label for="as-command">Command</label><div class="as-compose"><input id="as-command" name="command" autocomplete="off" spellcheck="false" value="/status" maxlength="64" required aria-describedby="as-help"><button type="submit" class="primary" id="as-send" disabled>Inspect evidence</button></div>'+
    '<p class="tiny muted" id="as-help">Supported: /status or /continue. No code, messages, payments or deployments are sent.</p>'+
