@@ -22,7 +22,7 @@ const {join}=require('node:path');
    const civil=await page.evaluate(()=>{const d=new Date();return String(d.getFullYear()).padStart(4,'0')+
     String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');});
    const day=civil.replaceAll('-','');
-   const nextDate=new Date(civil+'T12:00:00Z');nextDate.setUTCDate(nextDate.getUTCDate()+1);
+   const nextDate=new Date(civil.slice(0,4)+'-'+civil.slice(4,6)+'-'+civil.slice(6,8)+'T12:00:00Z');nextDate.setUTCDate(nextDate.getUTCDate()+1);
    const next=nextDate.toISOString().slice(0,10).replaceAll('-','');
    const privateMarker='SYNTHETIC_LOCAL_CALENDAR_ONLY_'+width;
    const file='BEGIN:VCALENDAR\r\nVERSION:2.0\r\n'+
