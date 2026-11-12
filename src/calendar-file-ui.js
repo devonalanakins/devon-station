@@ -69,5 +69,7 @@ globalThis.StationCalendarPreview=(()=>{
   });
   draw();
  }
+ // The initial route renders before this module is appended to the hosted shell.
+ mounted(location.hash.slice(1)||'home');
  return Object.freeze({mounted});
 })();

@@ -43,6 +43,7 @@ test('unfolds RFC-style lines and never renders untrusted markup as HTML in UI',
  assert.doesNotMatch(ui,/innerHTML|insertAdjacentHTML/);
  assert.doesNotMatch(ui,/localStorage|sessionStorage|fetch\(|XMLHttpRequest|navigator\.sendBeacon/);
  assert.match(ui,/new TextDecoder\('utf-8',\{fatal:true\}\)/);
+ assert.match(ui,/mounted\(location\.hash\.slice\(1\)\|\|'home'\)/);
 });
 test('supports UTC timed events with explicit local conversion, rejects unknown date formats',()=>{
  const input=vc(
