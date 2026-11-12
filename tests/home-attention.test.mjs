@@ -27,7 +27,7 @@ test('Decision summary is bounded and shows proposals without promoting them to 
  assert.equal(s.proposedCount,1);
  assert.equal(s.total,2);
  assert.equal(s.recordOnly,true);
- assert.deepEqual(s.preview,[{summary:'Review safe synthetic action',project:'Synthetic project'}]);
+ assert.deepEqual(s.preview,[{recordId:'action-a',projectId:'project-a',summary:'Review safe synthetic action',project:'Synthetic project'}]);
  assert.doesNotMatch(JSON.stringify(s),/receipt|journalEvents|business-private/);
  for(const invalid of [
   {...journal,scope:{scopeKind:'business',scopeId:'personal-a'}},
@@ -41,13 +41,14 @@ test('Decision summary is bounded and shows proposals without promoting them to 
  assert.throws(()=>homePersonalDecisions(journal,{scopeKind:'business',scopeId:'personal-a'}));
 });
 test('Work review previews expose only project slug and bounded metadata, not task prompts',()=>{
- const item={jobId:'a',projectSlug:'devon-station',state:'review',updatedAt:1794500000000,task:'SENSITIVE_DO_NOT_SHOW'};
- const config={jobs:[item,{...item,jobId:'b',state:'ready'}],nextCursor:null,executionEnabled:false,publicSharing:false};
+ const item={jobId:'11111111-1111-4111-8111-111111111111',projectSlug:'devon-station',state:'review',updatedAt:1794500000000,task:'SENSITIVE_DO_NOT_SHOW'};
+ const config={jobs:[item,{...item,jobId:'22222222-2222-4222-8222-222222222222',state:'ready'}],nextCursor:null,executionEnabled:false,publicSharing:false};
  const result=homeWorkSummary(config,new Set(['devon-station']));
  assert.equal(result.review,1);assert.equal(result.ready,1);
  assert.equal(result.reviewPreview.length,1);
  assert.equal(result.reviewPreview[0].projectSlug,'devon-station');
- assert.doesNotMatch(JSON.stringify(result),/SENSITIVE_DO_NOT_SHOW|jobId/);
+ assert.equal(result.reviewPreview[0].jobId,'11111111-1111-4111-8111-111111111111');
+ assert.doesNotMatch(JSON.stringify(result),/SENSITIVE_DO_NOT_SHOW/);
  assert.throws(()=>homeWorkSummary({...config,jobs:[{...item,projectSlug:'nona'}]},new Set(['devon-station'])),/ungranted_or_invalid_job/);
 });
 test('Home and Today share readonly review surfaces and existing navigation, no extra storage',()=>{
@@ -61,4 +62,20 @@ test('Home and Today share readonly review surfaces and existing navigation, no 
  assert.match(ui,/\['home','today'\]\.includes\(section\)/);
  assert.match(ui,/routeButton\(summary\.review\?'Review plans in Work'/);
  assert.doesNotMatch(ui,/localStorage|sessionStorage|\/api\/workspace\/decide|\/api\/ai-work\/jobs\/[^']*\/decision/);
+});
+
+
+test('specific review handoffs are single use and destination owned',()=>{
+ const core=read('src/home-evidence-core.mjs'),ui=read('src/home-evidence-ui.js');
+ const ws=read('src/workspace-ui.js'),work=read('src/ai-work-ui.js');
+ assert.match(ui,/WeakMap\(\)/);
+ assert.match(ui,/takeReview\(route\)/);
+ assert.match(ui,/reviewButtons\.get\(button\)/);
+ assert.match(ws,/takeReview\?\.\('workspace'\)/);
+ assert.match(ws,/selectedReview\.scopeId/);
+ assert.match(ws,/action\.status==='proposed'/);
+ assert.match(work,/takeReview\?\.\('aiwork'\)/);
+ assert.match(work,/current\.state==='review'/);
+ assert.match(work,/selectedReview\.jobId/);
+ assert.doesNotMatch(ui,/sessionStorage|localStorage|history\.pushState/);
 });
