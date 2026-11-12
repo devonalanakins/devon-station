@@ -233,3 +233,17 @@ body[data-motion=reduced] .monogram:hover,body[data-motion=reduced] .area-tile:h
 .today-date-summary span{font-size:11px;color:var(--muted);line-height:1.5}
 .today-item-copy span{overflow-wrap:anywhere}
 @media(max-width:650px){.today-date-summary{align-items:flex-start;flex-direction:column}}
+
+/* Explicit local-only personal calendar file preview, never a connected calendar claim. */
+.calendar-import{padding:18px 0;border-bottom:1px solid var(--line)}
+.calendar-import h3{font-size:13px;font-weight:630;margin:0 0 10px}
+.calendar-import p{font-size:12px;line-height:1.65}
+.calendar-import label{margin-top:14px}
+.calendar-import #calendar-import-file{width:100%;max-width:100%;font-size:12px;min-height:44px}
+.calendar-import #calendar-import-clear{margin-top:9px;min-height:44px}
+.calendar-import #calendar-import-status{color:var(--muted);overflow-wrap:anywhere}
+.calendar-import-events h4{font-size:12px;font-weight:650;margin:13px 0 9px}
+.calendar-import-event{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line);min-width:0}
+.calendar-import-event span{font-size:10px;color:var(--muted)}
+.calendar-import-event strong{font-size:12px;overflow-wrap:anywhere;font-weight:620}
+.calendar-import-event small{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
