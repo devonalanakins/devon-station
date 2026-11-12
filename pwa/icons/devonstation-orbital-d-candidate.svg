@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="DevonStation orbital D icon">
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#15253a"/><stop offset="0.5" stop-color="#0b1324"/><stop offset="1" stop-color="#070b16"/></linearGradient>
+    <radialGradient id="aura" cx="0.65" cy="0.59" r="0.64"><stop stop-color="#3440a4" stop-opacity="0.35"/><stop offset="0.54" stop-color="#1f5470" stop-opacity="0.14"/><stop offset="1" stop-color="#070b16" stop-opacity="0"/></radialGradient>
+    <linearGradient id="signal" x1="0.1" y1="0.2" x2="0.94" y2="0.9"><stop stop-color="#7ee9eb"/><stop offset="0.46" stop-color="#63b6f2"/><stop offset="1" stop-color="#ab86f6"/></linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8be3e8" stop-opacity="0.65"/><stop offset="1" stop-color="#b58bfb" stop-opacity="0.26"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#surface)"/>
+  <rect width="512" height="512" rx="112" fill="url(#aura)"/>
+  <rect x="15" y="15" width="482" height="482" rx="100" fill="none" stroke="#d6efff" stroke-opacity="0.10" stroke-width="3"/>
+  <path d="M118 290A154 154 0 0 1 287 107" stroke="url(#ring)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M392 222A154 154 0 0 1 242 405" stroke="url(#ring)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M170 157H233C307 157 356 197 356 256S307 355 233 355H170Z" fill="none" stroke="url(#signal)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M228 214L274 256L228 298" stroke="#effcff" stroke-width="21" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+  <circle cx="367" cy="159" r="9" fill="#91f2f1"/>
+  <circle cx="367" cy="159" r="16" fill="none" stroke="#91f2f1" stroke-opacity="0.26" stroke-width="3"/>
+</svg>
