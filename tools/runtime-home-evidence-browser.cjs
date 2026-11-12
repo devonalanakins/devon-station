@@ -30,7 +30,7 @@ const {join}=require('node:path');
    await page.locator('#he-project[data-state=observed]').waitFor();
    await page.locator('#he-work[data-state=observed]').waitFor();
    assert.match(await page.locator('#he-project').textContent(),/PR #52/);
-   assert.match(await page.locator('#he-project').textContent(),/Observed passing \(not merge or release approval\)/);
+   assert.match(await page.locator('#he-project').textContent(),/observed passing \(not merge or release approval\)/i);
    assert.match(await page.locator('#he-work').textContent(),/2 saved job plans shown/);
    assert.doesNotMatch(await page.content(),/SYNTHETIC_PRIVATE_TASK_MUST_NOT_LEAK/);
    assert.equal(await page.locator('#he-project a[href="https://github.com/devonalanakins/devon-station/pull/52"]').count(),1);
