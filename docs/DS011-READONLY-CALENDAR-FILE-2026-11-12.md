@@ -1,0 +1,13 @@
+# DS011 — Read-only personal calendar file preview
+
+Status: source-only draft, not deployed. No Google/Apple/Microsoft/provider calendar connection is present.
+
+This slice adds a working local-file calendar reader in Today. Its only authorization is the owner's explicit selection of a **personal** .ics file in the protected owner web application. Files are read in the browser (no upload, network call, private owner-state write, browser storage, or application credential); the preview is intentionally discarded on reload and cleared by the owner. The input refuses empty, non-.ics, invalid UTF-8 and files above 256 KB. No provider synchronization, invitations, appointments, publication or actions occur.
+
+The adapter supports bounded non-recurring iCalendar 2.0 VEVENT entries: all-day events (including short multi-day ranges), floating file times, TZID wall times labeled by the file's named timezone, and UTC times converted explicitly to device-local display. It displays only event title, start day and time; attendees, descriptions, URLs, secrets, alarms and other fields are ignored. All event strings are inserted with DOM textContent, not HTML. A partial calendar snapshot is never described as complete availability. Recurrence, recurrence exceptions, cancellations, malformed/unsupported date formats, and window limits are called out or omitted; no recurrence expansion is claimed.
+
+Today shows only supported events starting today or in the next seven local calendar days (up to 12 preview records). Imports must come from the correct **personal** calendar. Do not import business, patient or clinical calendars: DevonStation has no approved permissions for those systems.
+
+The existing owner capture planning dates and explicit manual .ics export remain unchanged. This is a truly functional user-file adapter, **not** a live calendar API or a calendar sync. Authorized provider-specific adapters require separate named-user OAuth/service scopes, calendar selection, privacy review and release acceptance before use.
+
+Acceptance: pure parser/agenda tests for content limits, time labels, recurrence, malicious HTML, duplicate fields and malformed calendars. Synthetic browser tests at 320/390/1440 for upload, display, warnings, keyboard-accessible clear, navigation, reload discard, no script injection/network/storage leakage and automated WCAG A/AA checks. Physical iPhone Safari, calendar-provider imports, production Access and backup/restore remain separate release gates.
