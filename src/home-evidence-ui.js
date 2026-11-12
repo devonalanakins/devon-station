@@ -13,11 +13,48 @@ globalThis.StationHomeEvidence=(()=>{
   slot.querySelector('.he-detail').replaceChildren();
  };
  const detail=(slot,...elements)=>slot.querySelector('.he-detail').append(...elements);
+
+ const routeButton=(label,route)=>{
+  const button=text('button',label);button.type='button';button.dataset.go=route;
+  button.className='he-route';return button;
+ };
+ async function decisions(slot,run,signal){
+  try{
+   const scopes=await read('/api/workspaces',signal);
+   if(!live(slot,run))return;
+   let selected;try{selected=homePersonalScope(scopes);}catch{throw {kind:'invalid'};}
+   if(selected.status==='none'){
+    status(slot,'no-grant','No personal workspace is authorized for this account.');
+    detail(slot,routeButton('Open Workspace','workspace'));return;
+   }
+   if(selected.status==='multiple'){
+    status(slot,'choose-scope','Multiple personal workspaces are authorized. Choose one inside Workspace; nothing was read here.');
+    detail(slot,routeButton('Choose in Workspace','workspace'));return;
+   }
+   const query=new URLSearchParams(selected.scope);
+   const payload=await read('/api/workspace?'+query,signal);
+   if(!live(slot,run))return;
+   let result;try{result=homePersonalDecisions(payload,selected.scope);}catch{throw {kind:'invalid'};}
+   status(slot,'observed','Personal decision journal checked. '+result.proposedCount+
+    ' proposal'+(result.proposedCount===1?'':'s')+' awaiting owner review.');
+   if(result.preview.length){
+    for(const item of result.preview){
+     const entry=document.createElement('div');entry.className='he-attention-item';
+     entry.append(text('strong',item.summary),text('span',item.project+' · Proposal only; no action executed.'));
+     detail(slot,entry);
+    }
+   }else detail(slot,text('p','No proposed actions in this one authorized personal journal. Other scopes are not inspected.','he-uncertainty'));
+   detail(slot,routeButton(result.proposedCount?'Review proposals in Workspace':'Open Workspace','workspace'));
+   detail(slot,text('p','Only one explicitly granted personal scope was inspected; other approvals remain unknown.','he-uncertainty'));
+  }catch(error){if(live(slot,run)){const f=failure(error);if(f)status(slot,...f);}}
+ }
+
  function failure(error){
   if(error?.name==='AbortError')return null;
   if(error?.kind==='auth')return ['sign-in','Sign in with the authorized owner identity to check this source.'];
   if(error?.kind==='denied')return ['denied','Access to this source was denied. No records were loaded.'];
   if(error?.kind==='unavailable')return ['unavailable','This source is not configured or temporarily unavailable on this host.'];
+  if(error?.kind==='source-review')return ['review-required','Workspace sources changed. Review the owning Workspace before using its decisions.'];
   if(error?.kind==='invalid')return ['invalid','The source response could not be verified. Nothing is presented as current.'];
   return ['network','Source request failed. Check your connection and refresh.'];
  }
@@ -27,6 +64,7 @@ globalThis.StationHomeEvidence=(()=>{
      response.status>=300&&response.status<400)throw {kind:'auth'};
   if(response.status===403)throw {kind:'denied'};
   if(response.status===503)throw {kind:'unavailable'};
+  if(response.status===409)throw {kind:'source-review'};
   if(!response.ok||!response.headers.get('Content-Type')?.toLowerCase().includes('application/json')||
      Number(response.headers.get('Content-Length'))>131072)throw {kind:'invalid'};
   // Reject oversized responses while reading: an untrusted proxy must not force
@@ -92,28 +130,38 @@ globalThis.StationHomeEvidence=(()=>{
    let summary;try{summary=homeWorkSummary(source,allowed);}catch{throw {kind:'invalid'};}
    status(slot,'observed','Owner-scoped Work records checked. '+(summary.partial?'First page only.':'No additional pages reported.'));
    detail(slot,text('p',summary.observedCount+' saved job plans shown · '+summary.review+' require review · '+summary.ready+' plans approved; new execution through this API is disabled.','he-record'));
+   if(summary.reviewPreview.length){
+    for(const record of summary.reviewPreview){
+     const row=document.createElement('div');row.className='he-attention-item';
+     const when=record.updatedAt?' · Updated '+new Date(record.updatedAt).toLocaleDateString():'';
+     row.append(text('strong','Plan awaiting review'),text('span',record.projectSlug+when+' · Review in Work before deciding.'));
+     detail(slot,row);
+    }
+   }
+   detail(slot,routeButton(summary.review?'Review plans in Work':'Open Work','aiwork'));
    if(summary.executionRecords)detail(slot,text('p',summary.executionRecords+' records include provider phase metadata; outcomes remain unverified here.','he-fact'));
    detail(slot,text('p','Listing contains metadata only. No task prompts were retrieved, and no work was executed.','he-uncertainty'));
   }catch(error){if(live(slot,run)){const f=failure(error);if(f)status(slot,...f);}}
  }
  function refresh(root){
   active?.abort();const run=++epoch;active=new AbortController();
-  const projectSlot=get(root,'he-project'),workSlot=get(root,'he-work');
-  if(!projectSlot||!workSlot)return;
-  for(const slot of [projectSlot,workSlot]){
+  const sources=[['he-project',project],['he-decisions',decisions],['he-work',work]]
+   .map(([id,loader])=>({slot:get(root,id),loader})).filter(x=>x.slot);
+  if(!sources.length)return;
+  for(const {slot} of sources){
    slot.dataset.state='loading';slot.setAttribute('aria-busy','true');
    slot.querySelector('.he-result').textContent='Checking authorized source…';
    slot.querySelector('.he-detail').replaceChildren();
   }
   const button=root.querySelector('[data-home-evidence-refresh]');
   if(button)button.disabled=true;
-  void Promise.allSettled([project(projectSlot,run,active.signal),work(workSlot,run,active.signal)]).then(()=>{
+  void Promise.allSettled(sources.map(({slot,loader})=>loader(slot,run,active.signal))).then(()=>{
    if(run===epoch&&root.isConnected&&button)button.disabled=false;
   });
  }
  function mounted(section){
   active?.abort();active=null;epoch++;
-  if(section!=='home')return;
+  if(!['home','today'].includes(section))return;
   const root=document.getElementById('station-home-evidence');if(!root)return;
   root.addEventListener('click',event=>{
    if(event.target.closest('[data-home-evidence-refresh]'))refresh(root);

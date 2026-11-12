@@ -19,3 +19,10 @@
 .he-uncertainty{font-size:11px!important;color:var(--muted)}
 .he-detail .source-link{font-size:12px;min-height:44px;max-width:max-content}
 @media(max-width:540px){.home-evidence{margin-top:18px}.he-source{padding:14px}.he-toolbar{flex-wrap:wrap}.he-toolbar button{margin-left:auto}}
+
+/* Read-only attention summaries use existing source status panels. */
+.he-attention-item{padding:8px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px;min-width:0}
+.he-attention-item strong{font-size:12px;font-weight:620;line-height:1.5;overflow-wrap:anywhere}
+.he-attention-item span{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.he-route{min-height:44px;max-width:max-content;font-size:12px;align-self:start}
+.today-connections .home-evidence{margin:14px 0 18px}
