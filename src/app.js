@@ -64,7 +64,8 @@ function home(){
  '<p class="tiny muted">This workspace shows your selected focus. Check the footer for private sync status. Focus is not task completion or verified scheduling.</p></section>'+
  '<section class="panel home-sources"><h2>Source-backed work</h2><p class="muted">Read-only owner grants determine what can be shown. Knowledge, communications and external calendars retain their own access rules.</p>'+ '<div id="station-home-evidence" class="home-evidence" aria-label="Owner-scoped source checks">'+
 '<div class="he-toolbar"><span class="eyebrow">SOURCE STATUS / READ-ONLY</span><button type="button" data-home-evidence-refresh>Refresh sources</button></div>'+ 
-'<div class="he-grid"><section class="he-source" id="he-project" aria-label="Project source evidence" data-state="loading" aria-busy="true"><h3>Project evidence</h3><p class="he-result" role="status" aria-live="polite">Checking authorized source…</p><div class="he-detail"></div></section>'+ 
+'<div class="he-grid"><section class="he-source" id="he-project" aria-label="Project source evidence" data-state="loading" aria-busy="true"><h3>Project evidence</h3><p class="he-result" role="status" aria-live="polite">Checking authorized source…</p><div class="he-detail"></div></section>'+
+  '<section class="he-source" id="he-decisions" aria-label="Personal workspace proposals" data-state="loading" aria-busy="true"><h3>Personal decisions</h3><p class="he-result" role="status" aria-live="polite">Checking authorized source…</p><div class="he-detail"></div></section>'+ 
 '<section class="he-source" id="he-work" aria-label="Private Work records" data-state="loading" aria-busy="true"><h3>Work records</h3><p class="he-result" role="status" aria-live="polite">Checking authorized source…</p><div class="he-detail"></div></section></div></div>'+
  '<div class="button-row"><button type="button" data-go="command">Review project evidence</button><button type="button" data-go="aiwork">Open Work</button><button type="button" data-go="inbox">View captures</button></div>'+
  '<p class="tiny muted">No live service, pending approval, calendar event or deployment is inferred from local notes.</p></section></div>';
@@ -82,8 +83,13 @@ function today(){
  }).join(''):'<div class="today-empty"><h3>No captures yet</h3><p>Capture one non-sensitive responsibility to begin. Nothing has been imported or invented.</p><button type="button" data-capture>Capture a thought</button></div>')+
  (data.active.length>20?'<p class="tiny muted">Showing 20 of '+data.active.length+' local captures. Open Captures for the full list.</p>':'')+
  '<div class="button-row today-footer-actions"><button type="button" data-go="inbox">All captures</button><button type="button" data-go="command">Inspect project evidence</button></div></section>'+
- '<aside class="panel today-connections"><h2>Other commitments</h2><div class="today-unconnected"><strong>Calendar</strong><p>No calendar commitments are displayed by this local view. Check your authorized calendar for scheduled events.</p></div>'+
- '<div class="today-unconnected"><strong>Approvals</strong><p>This view does not read permissioned approval queues. An empty list here is not proof that no approvals are pending.</p></div>'+
+ '<aside class="panel today-connections"><h2>Reviews and commitments</h2><p class="tiny muted">Only your authorized personal decisions and Work metadata appear here.</p>'+ 
+ '<div id="station-home-evidence" class="home-evidence" aria-label="Owner-scoped review checks">'+
+ '<div class="he-toolbar"><span class="eyebrow">REVIEW STATUS / READ-ONLY</span><button type="button" data-home-evidence-refresh>Refresh reviews</button></div>'+
+ '<div class="he-grid"><section class="he-source" id="he-decisions" aria-label="Personal workspace proposals" data-state="loading" aria-busy="true"><h3>Personal decisions</h3><p class="he-result" role="status" aria-live="polite">Checking authorized source…</p><div class="he-detail"></div></section>'+
+ '<section class="he-source" id="he-work" aria-label="Private Work records" data-state="loading" aria-busy="true"><h3>Work plans</h3><p class="he-result" role="status" aria-live="polite">Checking authorized source…</p><div class="he-detail"></div></section></div></div>'+
+ '<div class="today-unconnected"><strong>Calendar</strong><p>No calendar commitments are displayed by this local view. Check your authorized calendar for scheduled events.</p></div>'+
+ '<div class="today-unconnected"><strong>Other approvals</strong><p>Only the selected personal journal is inspected above. Separate service approvals and business queues are not read here.</p></div>'+
  '<div class="today-unconnected"><strong>Work execution</strong><p>Focused captures do not launch agents, send messages or authorize deployments.</p><button type="button" data-go="aiwork">Open Work</button></div></aside></div>';
 }
 

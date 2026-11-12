@@ -46,7 +46,7 @@ test('source summary requires exact PR HEAD, fixed repository URL and readonly A
 });
 test('Work summary contains only authorized metadata, never prompt text or unauthorized project counts',()=>{
  const grants=homeWorkGrants(work),result=homeWorkSummary(jobs,grants);
- assert.equal(result.observedCount,2);assert.equal(result.review,1);assert.equal(result.ready,1);
+ assert.equal(result.observedCount,2);assert.equal(result.review,1);assert.equal(result.ready,0); // A running execution is not a plan awaiting review
  assert.equal(result.executionRecords,1);assert.equal(result.partial,false);
  assert.doesNotMatch(JSON.stringify(result),/SECRET_NOT_TO_SHOW|OTHER_SECRET|task/);
  assert.equal(homeWorkSummary({...jobs,nextCursor:'cursor'},grants).partial,true);

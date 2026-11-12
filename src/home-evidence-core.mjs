@@ -54,7 +54,57 @@ export function homeWorkSummary(data,allowed){
      j.execution!==undefined&&(!j.execution||!phases.has(j.execution.phase)))
    throw Error('ungranted_or_invalid_job');
  }
- return {observedCount:data.jobs.length,review:data.jobs.filter(j=>j.state==='review').length,
-  ready:data.jobs.filter(j=>j.state==='ready').length,
-  executionRecords:data.jobs.filter(j=>!!j.execution).length,partial:data.nextCursor!==null};
+ const reviewable=data.jobs.filter(j=>j.state==='review'&&!j.execution);
+ return {observedCount:data.jobs.length,review:reviewable.length,
+  ready:data.jobs.filter(j=>j.state==='ready'&&!j.execution).length,
+  executionRecords:data.jobs.filter(j=>!!j.execution).length,partial:data.nextCursor!==null,
+  reviewPreview:reviewable.slice(0,3).map(j=>({
+   projectSlug:j.projectSlug,
+   updatedAt:Number.isSafeInteger(j.updatedAt)&&j.updatedAt>0?j.updatedAt:null,
+  }))};
+}
+
+const homeScopeId=/^[A-Za-z0-9_-]{1,64}$/;
+
+/** Home/Today never select professional, business or client data implicitly. */
+export function homePersonalScope(response){
+ if(!response||response.execution!=='record_only'||!Array.isArray(response.scopes)||
+    response.scopes.length>32)throw Error('invalid_workspace_scopes');
+ const seen=new Set(),personal=[];
+ for(const s of response.scopes){
+  if(!s||typeof s.scopeKind!=='string'||!/^[a-z][a-z0-9-]{0,31}$/.test(s.scopeKind)||
+     !homeScopeId.test(s.scopeId))throw Error('invalid_workspace_scopes');
+  const key=s.scopeKind+':'+s.scopeId;
+  if(seen.has(key))throw Error('duplicate_workspace_scope');
+  seen.add(key);
+  if(s.scopeKind==='personal')personal.push({scopeKind:'personal',scopeId:s.scopeId});
+ }
+ return {status:personal.length===1?'selected':personal.length?'multiple':'none',
+  scope:personal.length===1?personal[0]:null};
+}
+/** A journal record only establishes an owner-reviewed proposal, never execution. */
+export function homePersonalDecisions(response,expectedScope){
+ if(!expectedScope||expectedScope.scopeKind!=='personal'||!homeScopeId.test(expectedScope.scopeId)||
+    !response||response.execution!=='record_only'||!response.scope||
+    response.scope.scopeKind!==expectedScope.scopeKind||response.scope.scopeId!==expectedScope.scopeId||
+    !Number.isSafeInteger(response.generation)||response.generation<0||
+    !Array.isArray(response.projects)||response.projects.length>500||
+    !Array.isArray(response.actions)||response.actions.length>500)throw Error('invalid_workspace_decisions');
+ const approvedProjects=new Map();
+ for(const p of response.projects){
+  if(!p||!homeScopeId.test(p.projectId)||typeof p.title!=='string'||!p.title.trim()||
+     p.title.length>240||approvedProjects.has(p.projectId))throw Error('invalid_workspace_projects');
+  approvedProjects.set(p.projectId,p.title);
+ }
+ const knownIds=new Set(),proposed=[];
+ for(const a of response.actions){
+  if(!a||!homeScopeId.test(a.recordId)||knownIds.has(a.recordId)||
+     !approvedProjects.has(a.projectId)||!['proposed','approved','rejected'].includes(a.status)||
+     typeof a.summary!=='string'||a.summary.length<1||a.summary.length>180||
+     !Number.isSafeInteger(a.revision)||a.revision<1)throw Error('invalid_workspace_action');
+  knownIds.add(a.recordId);
+  if(a.status==='proposed')proposed.push({summary:a.summary,project:approvedProjects.get(a.projectId)});
+ }
+ return {scope:{...expectedScope},generation:response.generation,total:response.actions.length,
+  proposedCount:proposed.length,preview:proposed.slice(-3).reverse(),recordOnly:true};
 }

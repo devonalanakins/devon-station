@@ -53,7 +53,7 @@ test('local focus persists through safe restore without fabricating completion',
 test('Home and Today do not imply real calendar, execution or approval state',()=>{
  const app=read('src/app.js');
  assert.match(app,/Focused captures do not launch agents/);
- assert.match(app,/This view does not read permissioned approval queues/);
+ assert.match(app,/Separate service approvals and business queues are not read here/);
  assert.match(app,/No calendar commitments are displayed by this local view/);
  assert.match(app,/No external work starts without authorization/);
  const builder=read('tools/build-hosted-shell.mjs');
