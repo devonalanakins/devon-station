@@ -247,3 +247,7 @@ body[data-motion=reduced] .monogram:hover,body[data-motion=reduced] .area-tile:h
 .calendar-import-event span{font-size:10px;color:var(--muted)}
 .calendar-import-event strong{font-size:12px;overflow-wrap:anywhere;font-weight:620}
 .calendar-import-event small{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+
+/* Explicit follow-up transfer: importing a calendar never persists a capture by itself. */
+.calendar-import-plan{min-height:44px;align-self:flex-start;margin-top:5px;font-size:11px}
+.capture-source-note{padding:10px 12px;border:1px solid var(--line);border-radius:10px;line-height:1.6}

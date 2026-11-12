@@ -2,6 +2,7 @@
 globalThis.StationCalendarPreview=(()=>{
  'use strict';
  let snapshot=null,fileLabel='',epoch=0,loading=false,error='';
+ const eventActions=new WeakMap();
  const root=()=>document.getElementById('station-calendar-import');
  function draw(){
   const node=root();if(!node)return;
@@ -34,7 +35,9 @@ globalThis.StationCalendarPreview=(()=>{
    const date=document.createElement('span');date.textContent=item.startDay===today?'Today':item.startDay;
    const title=document.createElement('strong');title.textContent=item.title;
    const time=document.createElement('small');time.textContent=item.label+(item.spansMultipleDays?' · spans multiple days':'');
-   article.append(date,title,time);list.append(article);
+   const action=document.createElement('button');action.type='button';action.className='calendar-import-plan';
+   action.textContent='Plan follow-up';action.setAttribute('aria-label','Plan follow-up for '+item.title);
+   eventActions.set(action,item);article.append(date,title,time,action);list.append(article);
   }
   if(agenda.more){const p=document.createElement('p');p.className='muted';p.textContent='Additional events in this file are not shown in this compact preview.';list.append(p);}
  }
@@ -64,6 +67,15 @@ globalThis.StationCalendarPreview=(()=>{
   const node=root();if(!node)return;
   const input=node.querySelector('#calendar-import-file');
   input.addEventListener('change',()=>void receive(input));
+  node.addEventListener('click',event=>{
+   const button=event.target.closest('button.calendar-import-plan');
+   if(!button||!node.contains(button)||!snapshot)return;
+   const selected=eventActions.get(button);
+   if(!selected||!snapshot.events.includes(selected))return;
+   // No automatic saving: the owner reviews the untrusted file title in Quick Capture.
+   const day=localDay(),date=selected.startDay<day?day:selected.startDay;
+   openCapture('Family & Home',null,{title:'Follow up: '+selected.title,planDate:date});
+  });
   node.querySelector('#calendar-import-clear').addEventListener('click',()=>{
    epoch++;snapshot=null;fileLabel='';error='';loading=false;input.value='';draw();input.focus();
   });
