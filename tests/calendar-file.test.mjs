@@ -102,8 +102,8 @@ test('an imported event can only prefill an explicitly reviewed owner capture',(
  assert.match(ui,/snapshot\.events\.includes\(selected\)/);
  assert.match(ui,/openCapture\('Family & Home',null,\{title:'Follow up: '\+selected\.title,planDate:date\}\)/);
  assert.match(app,/function openCapture\(area,draft=null,prefill=null\)/);
- assert.match(app,/\$\('#capture-text'\)\.value=draft\?\.title\?\?\(fromFile\?prefill\.title:''\)/);
- assert.match(app,/\$\('#capture-date'\)\.value=draft\?\.planDate\?\?\(fromFile\?prefill\.planDate:''\)/);
+ assert.match(app,/\$\('#capture-text'\)\.value=draft\?\.title\?\?\(fromCalendar\?prefill\.title:''\)/);
+ assert.match(app,/\$\('#capture-date'\)\.value=draft\?\.planDate\?\?\(fromCalendar\?prefill\.planDate:''\)/);
  assert.match(html,/id="capture-source-note"[^>]*hidden/);
  assert.match(html,/Nothing has been saved/);
  assert.doesNotMatch(ui,/persist\(|addDraft\(|saveOwnerState\(|fetch\(|localStorage|sessionStorage/);
