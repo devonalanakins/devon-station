@@ -1,0 +1,21 @@
+
+/* Read-only, scoped Home evidence surface. Source text never controls markup or actions. */
+.home-evidence{margin:20px 0 18px;padding-top:16px;border-top:1px solid var(--line)}
+.he-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.he-toolbar .eyebrow{font-size:10px;letter-spacing:.11em}
+.he-toolbar button{font-size:11px;min-height:44px;padding:8px 12px}
+.he-toolbar button:disabled{opacity:.65;cursor:wait}
+.he-grid{display:grid;gap:11px}
+.he-source{padding:16px;border:1px solid #3b576c;background:linear-gradient(140deg,#0a1b2c,#121f32);border-radius:15px;min-width:0}
+.he-source h3{font-size:13px;letter-spacing:.01em;margin:0 0 8px;font-weight:650}
+.he-result{margin:0;color:#b9d6e3;font-size:12px;line-height:1.65}
+.he-source[data-state=denied] .he-result,.he-source[data-state=sign-in] .he-result{color:#ffc4a2}
+.he-source[data-state=invalid] .he-result,.he-source[data-state=network] .he-result{color:#ffce9d}
+.he-detail{display:grid;gap:8px;margin-top:10px}
+.he-detail p{margin:0;overflow-wrap:anywhere;font-size:12px;line-height:1.65}
+.he-record{color:#e8f7fc;font-weight:580}
+.he-fact{color:#b5d5e2}
+.he-next{border-left:2px solid var(--accent);padding:6px 0 6px 10px;color:#dceef3}
+.he-uncertainty{font-size:11px!important;color:var(--muted)}
+.he-detail .source-link{font-size:12px;min-height:44px;max-width:max-content}
+@media(max-width:540px){.home-evidence{margin-top:18px}.he-source{padding:14px}.he-toolbar{flex-wrap:wrap}.he-toolbar button{margin-left:auto}}
