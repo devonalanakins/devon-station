@@ -98,6 +98,9 @@ jobs:
           path: |
             tools/assistant-*.png
             tools/assistant-browser-results.json
+            tools/home-*.png
+            tools/today-*.png
+            tools/browser-results.json
           if-no-files-found: ignore
           retention-days: 7
       - name: Verify protected release boundary or prepare legacy review-only candidate
