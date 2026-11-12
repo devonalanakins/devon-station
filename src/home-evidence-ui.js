@@ -91,7 +91,7 @@ globalThis.StationHomeEvidence=(()=>{
    if(!live(slot,run))return;
    let summary;try{summary=homeWorkSummary(source,allowed);}catch{throw {kind:'invalid'};}
    status(slot,'observed','Owner-scoped Work records checked. '+(summary.partial?'First page only.':'No additional pages reported.'));
-   detail(slot,text('p',summary.observedCount+' saved job plans shown · '+summary.review+' require review · '+summary.ready+' plans approved, execution locked.','he-record'));
+   detail(slot,text('p',summary.observedCount+' saved job plans shown · '+summary.review+' require review · '+summary.ready+' plans approved; new execution through this API is disabled.','he-record'));
    if(summary.executionRecords)detail(slot,text('p',summary.executionRecords+' records include provider phase metadata; outcomes remain unverified here.','he-fact'));
    detail(slot,text('p','Listing contains metadata only. No task prompts were retrieved, and no work was executed.','he-uncertainty'));
   }catch(error){if(live(slot,run)){const f=failure(error);if(f)status(slot,...f);}}

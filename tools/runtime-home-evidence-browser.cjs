@@ -41,6 +41,10 @@ const {join}=require('node:path');
    assert.deepEqual(accessibility,[],'Home source accessibility '+width);
    assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=1,'Home overflow '+width);
    await page.screenshot({path:join(__dirname,'home-evidence-'+width+'.png'),fullPage:true});
+   // The application scrolls inside main, so a fullPage image alone only shows
+   // the first viewport. Capture the actual source cards after scrolling.
+   await page.locator('.he-toolbar').scrollIntoViewIfNeeded();
+   await page.screenshot({path:join(__dirname,'home-evidence-panel-'+width+'.png'),fullPage:false});
    server.env.ASSISTANT_PROJECT_GRANTS_JSON='[]';
    await page.getByRole('button',{name:'Refresh sources'}).click();
    await page.locator('#he-project[data-state=no-grant]').waitFor();
