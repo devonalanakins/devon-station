@@ -54,7 +54,7 @@ test('Home and Today do not imply real calendar, execution or approval state',()
  const app=read('src/app.js');
  assert.match(app,/Focused captures do not launch agents/);
  assert.match(app,/Separate service approvals and business queues are not read here/);
- assert.match(app,/No calendar commitments are displayed by this local view/);
+ assert.match(app,/No calendar service is connected/);
  assert.match(app,/No external work starts without authorization/);
  const builder=read('tools/build-hosted-shell.mjs');
  assert.match(builder,/Inspect authorized project evidence without executing actions/);
