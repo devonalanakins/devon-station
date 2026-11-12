@@ -173,3 +173,17 @@ body[data-contrast=high] .panel,body[data-contrast=high] .station-assistant{bord
  .monogram,.nav-item,.search-trigger,.area-tile{transition:none}
 }
 body[data-motion=reduced] .monogram:hover,body[data-motion=reduced] .area-tile:hover{transform:none}
+
+
+/* Wider screens use readable navigation labels, not a stack of tiny pictograms. */
+@media(min-width:1100px){
+ .app{grid-template-columns:224px minmax(0,1fr)}
+ .rail{padding:22px 13px 16px;align-items:stretch}
+ .monogram{position:relative;margin:0 0 22px 8px;width:53px;height:53px;flex-shrink:0}
+ .monogram::after{content:"DevonStation";position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);font-size:15px;letter-spacing:-.035em;color:#f0f8ff;font-weight:690;pointer-events:none}
+ .rail #nav{gap:5px;align-content:start}
+ .nav-item{height:46px;flex-direction:row;justify-content:flex-start;gap:13px;padding:9px 12px;font-size:12px;text-align:left;white-space:nowrap}
+ .nav-item svg{width:19px;height:19px;flex:0 0 19px}
+ .nav-item[aria-current=page]:before{left:-14px;height:23px}
+ .rail-bottom{align-self:flex-start;display:grid;place-items:center;width:36px;height:36px;margin-left:9px}
+}
