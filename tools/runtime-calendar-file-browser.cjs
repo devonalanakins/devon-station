@@ -39,6 +39,27 @@ const {join}=require('node:path');
    if(!status.includes('1 omitted (recurring 1')||!status.includes('not live calendar availability'))throw Error('unsupported recurrence not disclosed');
    const stored=await page.evaluate(()=>[localStorage.getItem('devon-station:local:v1')||'',sessionStorage.getItem('devon-station:tab-recovery:v1')||'']);
    if(stored.some(x=>x.includes(privateMarker)))throw Error('calendar leaked to storage');
+   // A calendar event may only become an owner draft following review and explicit submit.
+   const beforeReview=await page.evaluate(()=>localStorage.getItem('devon-station:local:v1')||'');
+   const selected=panel.locator('.calendar-import-event').filter({hasText:privateMarker});
+   await selected.getByRole('button',{name:'Plan follow-up for '+privateMarker}).click();
+   await page.locator('#capture[open]').waitFor();
+   if(await page.locator('#capture-text').inputValue()!=='Follow up: '+privateMarker)throw Error('selected file event did not prefill review title');
+   if(await page.locator('#capture-date').inputValue()!==civil)throw Error('selected calendar date did not prefill owner plan');
+   if(!(await page.locator('#capture-source-note').isVisible()))throw Error('untrusted calendar prefill needs visible owner review warning');
+   if(await page.evaluate(()=>localStorage.getItem('devon-station:local:v1')||'')!==beforeReview)
+    throw Error('calendar handoff persisted without explicit submission');
+   await page.locator('#capture').getByRole('button',{name:'Cancel'}).click();
+   if(await page.evaluate(()=>localStorage.getItem('devon-station:local:v1')||'')!==beforeReview)
+    throw Error('cancelled calendar prefill persisted without authorization');
+   await selected.getByRole('button',{name:'Plan follow-up for '+privateMarker}).click();
+   await page.locator('#capture').getByRole('button',{name:'Save local draft'}).click();
+   await page.getByText('Follow up: '+privateMarker,{exact:true}).waitFor();
+   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('devon-station:local:v1')||'{}').drafts??[]);
+   if(!saved.some(d=>d.title==='Follow up: '+privateMarker&&d.planDate===civil&&d.area==='Family & Home'))
+    throw Error('explicit calendar-derived follow-up was not saved through owner capture');
+   await page.locator('#nav [data-go=today]').click();
+   await panel.getByText(privateMarker).waitFor();
    await page.addScriptTag({content:require('axe-core').source});
    const a11y=await page.evaluate(async()=>(
     await axe.run(document.querySelector('#station-calendar-import'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa']}})
@@ -60,9 +81,9 @@ const {join}=require('node:path');
    await panel.getByText(privateMarker).waitFor();
    await page.reload();
    await panel.getByText('No personal calendar file selected.',{exact:false}).waitFor();
-   if(await page.content().then(s=>s.includes(privateMarker)))throw Error('file content persisted after reload');
+   if((await panel.textContent()).includes(privateMarker))throw Error('private file snapshot survived reload');
    if(errors.length||external.length||server.externalCalls())throw Error('script or external call '+JSON.stringify({errors,external,count:server.externalCalls()}));
-   results.push({width,localPreview:true,recurrenceOmitted:true,htmlSafe:true,clearAndReload:true,overflow,axe:0,externalCalls:0});
+   results.push({width,localPreview:true,recurrenceOmitted:true,htmlSafe:true,explicitFollowupReview:true,cancelHasNoWrite:true,submitSavesCapture:true,clearAndReload:true,overflow,axe:0,externalCalls:0});
    await context.close();
   }
   writeFileSync(join(__dirname,'calendar-import-browser-results.json'),JSON.stringify(results,null,2));
