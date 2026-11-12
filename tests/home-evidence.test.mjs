@@ -16,8 +16,8 @@ const evidence={readOnly:true,executionClass:'A0',command:'/status',workspaceId:
 const work={projects:[{slug:'devon-station',name:'DevonStation'},{slug:'rhen',name:'Rhen'}],
  executionEnabled:false,publicSharing:false};
 const jobs={executionEnabled:false,publicSharing:false,nextCursor:null,jobs:[
- {jobId:'a',state:'review',projectSlug:'devon-station',task:'SECRET_NOT_TO_SHOW'},
- {jobId:'b',state:'ready',projectSlug:'rhen',execution:{phase:'running'},task:'OTHER_SECRET'}
+ {jobId:'11111111-1111-4111-8111-111111111111',state:'review',projectSlug:'devon-station',task:'SECRET_NOT_TO_SHOW'},
+ {jobId:'22222222-2222-4222-8222-222222222222',state:'ready',projectSlug:'rhen',execution:{phase:'running'},task:'OTHER_SECRET'}
 ]};
 
 test('only pinned owner-scoped project grants permit GitHub read-only checks',()=>{
@@ -49,6 +49,7 @@ test('Work summary contains only authorized metadata, never prompt text or unaut
  assert.equal(result.observedCount,2);assert.equal(result.review,1);assert.equal(result.ready,0); // A running execution is not a plan awaiting review
  assert.equal(result.executionRecords,1);assert.equal(result.partial,false);
  assert.doesNotMatch(JSON.stringify(result),/SECRET_NOT_TO_SHOW|OTHER_SECRET|task/);
+ assert.equal(result.reviewPreview[0].jobId,'11111111-1111-4111-8111-111111111111');
  assert.equal(homeWorkSummary({...jobs,nextCursor:'cursor'},grants).partial,true);
  assert.throws(()=>homeWorkGrants({...work,publicSharing:true}),/invalid_work_capability/);
  assert.throws(()=>homeWorkGrants({...work,projects:[...work.projects,work.projects[0]]}),/invalid_work_grants/);

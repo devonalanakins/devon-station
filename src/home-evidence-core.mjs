@@ -48,23 +48,27 @@ export function homeWorkSummary(data,allowed){
     data.nextCursor!==null&&(typeof data.nextCursor!=='string'||data.nextCursor.length>4096))
    throw Error('invalid_work_source');
  const states=new Set(['review','ready','rejected','cancelled']);
+ const jobIds=new Set();
  const phases=new Set(['authorized','submitting','running','waiting','unverified','cancel_requested','cancelled','completed','failed','blocked']);
  for(const j of data.jobs){
-  if(!j||typeof j!=='object'||!allowed.has(j.projectSlug)||!states.has(j.state)||
+  if(!j||typeof j!=='object'||!homeWorkId.test(j.jobId)||jobIds.has(j.jobId)||
+     !allowed.has(j.projectSlug)||!states.has(j.state)||
      j.execution!==undefined&&(!j.execution||!phases.has(j.execution.phase)))
    throw Error('ungranted_or_invalid_job');
+  jobIds.add(j.jobId);
  }
  const reviewable=data.jobs.filter(j=>j.state==='review'&&!j.execution);
  return {observedCount:data.jobs.length,review:reviewable.length,
   ready:data.jobs.filter(j=>j.state==='ready'&&!j.execution).length,
   executionRecords:data.jobs.filter(j=>!!j.execution).length,partial:data.nextCursor!==null,
   reviewPreview:reviewable.slice(0,3).map(j=>({
-   projectSlug:j.projectSlug,
+   jobId:j.jobId,projectSlug:j.projectSlug,
    updatedAt:Number.isSafeInteger(j.updatedAt)&&j.updatedAt>0?j.updatedAt:null,
   }))};
 }
 
 const homeScopeId=/^[A-Za-z0-9_-]{1,64}$/;
+const homeWorkId=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 /** Home/Today never select professional, business or client data implicitly. */
 export function homePersonalScope(response){
@@ -103,7 +107,7 @@ export function homePersonalDecisions(response,expectedScope){
      typeof a.summary!=='string'||a.summary.length<1||a.summary.length>180||
      !Number.isSafeInteger(a.revision)||a.revision<1)throw Error('invalid_workspace_action');
   knownIds.add(a.recordId);
-  if(a.status==='proposed')proposed.push({summary:a.summary,project:approvedProjects.get(a.projectId)});
+  if(a.status==='proposed')proposed.push({recordId:a.recordId,projectId:a.projectId,summary:a.summary,project:approvedProjects.get(a.projectId)});
  }
  return {scope:{...expectedScope},generation:response.generation,total:response.actions.length,
   proposedCount:proposed.length,preview:proposed.slice(-3).reverse(),recordOnly:true};

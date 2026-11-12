@@ -27,7 +27,7 @@
    (d.state==='review'?`<button data-aw-action="approve-plan" class="primary" ${busy?'disabled':''}>Approve plan only</button><button data-aw-action="reject" ${busy?'disabled':''}>Reject plan</button>`:'')+
    (['review','ready'].includes(d.state)?`<button data-aw-action="cancel" ${busy?'disabled':''}>Cancel pending job</button>`:`<button data-aw-followup ${busy?'disabled':''}>Prepare follow-up plan</button>`);
   const output=run?`<section aria-label="Private execution record"><h3>Execution record</h3><p>Authorized session cap: <strong>$${(run.approvedLimitCents/100).toFixed(2)}</strong>.</p><p>Provider-reported consumption: ${run.usage?.consumedCents!==null&&run.usage?.consumedCents!==undefined?'$'+(run.usage.consumedCents/100).toFixed(2):'unknown'} (best effort; may change).</p><p>${run.providerOutcomeConfirmed?'Root turn outcome confirmed by provider readback.':'Provider outcome is not confirmed.'} Task results still need independent review.</p>${run.lastError?'<p class="aw-lock">Recovery or owner review is required. This job will not restart automatically.</p>':''}<h3>Private output</h3>${run.outputText?`<pre class="aw-text">${esc(run.outputText)}</pre>`:'<p class="muted">No private output has been recovered.</p>'}<p class="tiny muted">${run.outputTruncated?'Output reached its storage limit.':run.outputComplete?'Streamed output was saved.':'Saved output may be incomplete after interruption.'}</p><h3>Execution evidence</h3>${run.evidence.length?`<ul>${run.evidence.map(e=>`<li>Provider root-turn readback: ${esc(e.status)} · ${esc(new Date(e.at).toLocaleString())}</li>`).join('')}</ul>`:'<p class="muted">No provider readback evidence yet.</p>'}<details><summary>Private session identity</summary><p class="aw-text">Session: ${esc(run.sessionId??'Not yet recovered')}<br>Turn: ${esc(run.turnId??'Not yet recovered')}</p></details></section>`:'<h3>Output and evidence</h3><p class="muted">No agent has run for this job. No output, test results or code changes are claimed.</p>';
-  return `<section class="panel aw-reader" aria-label="Private job detail"><div class="panel-head"><h2>Job review</h2><span class="tag">${esc(statusOf(d))}</span></div><p>${esc(config.projects.find(p=>p.slug===d.projectSlug)?.name)} · ${esc(config.profiles[d.profile])}</p><pre class="aw-text">${esc(d.task)}</pre><p>Proposed cap: <strong>$${(d.spendLimitCents/100).toFixed(2)}</strong>. ${run?'Execution authority is recorded separately from the plan.':'Billing is not authorized.'}</p><p class="aw-lock">${run?'Cancellation requests need provider confirmation. This console cannot start new API execution.':'Execution is not connected. Approving this plan saves your decision and makes no API request.'}</p><div class="button-row">${controls}</div>${output}<h3>Decision history</h3><ol>${d.history.map(h=>`<li>${esc(labels[h.state])} · ${esc(new Date(h.at).toLocaleString())}</li>`).join('')}</ol>${d.parentJobId?'<p class="tiny muted">This is a follow-up plan linked to a previous closed plan.</p>':''}</section>`;
+  return `<section class="panel aw-reader" aria-label="Private job detail"><div class="panel-head"><h2 id="aw-review-title" tabindex="-1">Job review</h2><span class="tag">${esc(statusOf(d))}</span></div><p>${esc(config.projects.find(p=>p.slug===d.projectSlug)?.name)} · ${esc(config.profiles[d.profile])}</p><pre class="aw-text">${esc(d.task)}</pre><p>Proposed cap: <strong>$${(d.spendLimitCents/100).toFixed(2)}</strong>. ${run?'Execution authority is recorded separately from the plan.':'Billing is not authorized.'}</p><p class="aw-lock">${run?'Cancellation requests need provider confirmation. This console cannot start new API execution.':'Execution is not connected. Approving this plan saves your decision and makes no API request.'}</p><div class="button-row">${controls}</div>${output}<h3>Decision history</h3><ol>${d.history.map(h=>`<li>${esc(labels[h.state])} · ${esc(new Date(h.at).toLocaleString())}</li>`).join('')}</ol>${d.parentJobId?'<p class="tiny muted">This is a follow-up plan linked to a previous closed plan.</p>':''}</section>`;
  }
 
  function draw(focus){
@@ -36,7 +36,7 @@
   root.innerHTML=`<div class="aw-hero"><div><span class="eyebrow">PRIVATE WORK / OWNER CONTROL</span><h2>Intent. Evidence. Your call.</h2><p>Keep parallel work organized, review its boundaries, and retain every decision.</p></div><div class="aw-privacy"><strong>Private by default</strong><span>Public sharing off</span><span>API execution locked</span></div></div><p id="aw-status" role="status" tabindex="-1">${esc(notice)}</p><p id="aw-error" class="error" role="alert" tabindex="-1">${esc(error)}</p><div class="button-row"><button data-aw-reload ${busy?'disabled':''}>Reload jobs</button><span class="tiny muted">Encrypted private storage · not saved in browser storage</span></div>${config?`<div class="aw-layout">${form()}<div class="aw-supervision"><div class="aw-lanes">${lane(['review'],'Review')}${lane(['ready','authorized','submitting','running','waiting','unverified','cancel_requested'],'Work')}${lane(['rejected','cancelled','completed','failed','blocked'],'Closed')}</div>${cursor?'<button data-aw-more>Load older jobs</button>':''}${reader()}</div></div>`:'<section class="panel"><h2>Owner connection required</h2><p>Private job storage, project grants and encryption must be configured before the console can open.</p></section>'}`;
   if(focus)document.getElementById(focus)?.focus({preventScroll:true});
  }
- async function load({quiet=false,more=false}={}){
+ async function load({quiet=false,more=false,selectedReview=null}={}){
   if(busy)return;
   const mine=epoch;
   if(!quiet){busy=true;error='';draw();}
@@ -67,10 +67,22 @@
     const status=document.getElementById('aw-status');if(status)status.textContent=notice;return;
    }
    jobs=more?[...jobs,...result.jobs.filter(j=>!jobs.some(x=>x.jobId===j.jobId))]:result.jobs;cursor=result.nextCursor;
-   if(detail){const response=await api('jobs/'+detail.jobId);if(mine!==epoch)return;detail=response.job;}
-   notice='Saved jobs loaded. API execution and public sharing remain off.';
+   if(selectedReview){
+    const target=result.jobs.find(j=>j.jobId===selectedReview.jobId&&
+     j.projectSlug===selectedReview.projectSlug&&j.state==='review'&&!j.execution);
+    if(!target||!nextConfig.projects.some(p=>p.slug===selectedReview.projectSlug)){
+     detail=null;notice='Selected plan is no longer pending or authorized. Choose a current review.';
+    }else{
+     const response=await api('jobs/'+encodeURIComponent(target.jobId));if(mine!==epoch)return;
+     const current=response.job;
+     if(current?.jobId===target.jobId&&current.projectSlug===target.projectSlug&&current.state==='review'&&!current.execution){
+      detail=current;notice='Selected private plan revalidated. Review before any decision.';
+     }else{detail=null;notice='Selected plan changed. Choose a current review.';}
+    }
+   }else if(detail){const response=await api('jobs/'+detail.jobId);if(mine!==epoch)return;detail=response.job;}
+   if(!selectedReview)notice='Saved jobs loaded. API execution and public sharing remain off.';
   }catch(e){if(mine===epoch){error=e.message;detail=null;if(!quiet){config=null;jobs=[];}else{config=null;jobs=[];draft.task='';draw();}}}
-  finally{if(mine===epoch&&!quiet){busy=false;draw('aw-status');}}
+  finally{if(mine===epoch&&!quiet){busy=false;const focused=selectedReview&&detail?.jobId===selectedReview.jobId;draw(focused?'aw-review-title':'aw-status');if(focused)document.getElementById('aw-review-title')?.scrollIntoView({block:'nearest'});}}
  }
  async function change(action){
   if(busy||!detail)return;const mine=epoch,id=detail.jobId,revision=detail.revision,executionRevision=detail.execution?.revision;busy=true;error='';draw();
@@ -112,7 +124,8 @@
  globalThis.StationAiWork=Object.freeze({mounted(section){
   clearInterval(timer);timer=null;epoch++;busy=false;
   if(section!=='aiwork'){config=null;jobs=[];detail=null;draft.task='';submissionId=null;parentJobId=null;return;}
-  draw();void load();timer=setInterval(()=>{if(!document.hidden&&host())void load({quiet:true});},10000);
+  const selectedReview=globalThis.StationHomeEvidence?.takeReview?.('aiwork')??null;
+  draw();void load({selectedReview});timer=setInterval(()=>{if(!document.hidden&&host())void load({quiet:true});},10000);
  }});
  if(host())globalThis.StationAiWork.mounted('aiwork');
 })();

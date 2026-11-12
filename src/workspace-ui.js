@@ -33,18 +33,40 @@
   if(state?.journalEvents?.length)root.insertAdjacentHTML('beforeend',`<section class="panel ws-governance"><h2>Recovery and source history</h2><ol>${state.journalEvents.slice().reverse().map(e=>`<li><strong>${e.kind==='restore'?'Journal restored':'Project sources reviewed'}</strong> · ${escape(date(e.createdAt))}<br><span class="tiny ws-reference">Receipt ${escape(e.eventId)}</span></li>`).join('')}</ol></section>`);
   if(focus)document.getElementById(focus)?.focus({preventScroll:true});
  }
- async function load(changeScope){
+ async function load(changeScope,selectedReview=null){
   // The asynchronous redraw replaces its triggering control. Return focus to
   // that control so keyboard and screen-reader users do not land on <body>.
   const active=document.activeElement;
   const returnFocus=active?.id==='ws-reload'?'ws-reload':changeScope&&active?.id==='ws-scope'?'ws-scope':null;
-  const mine=++epoch;busy=true;error='';notice='';state=null;reviewId=null;sourceReview=null;recoveryMode=null;pendingRestore=null;pendingTransfer=null;if(changeScope){draft='';projectId=null;}draw();
+  const mine=++epoch;busy=true;error='';notice='';state=null;reviewId=null;sourceReview=null;recoveryMode=null;pendingRestore=null;pendingTransfer=null;if(changeScope||selectedReview){draft='';projectId=null;}draw();
   try{
    const response=await api('/api/workspaces');if(mine!==epoch)return;scopes=response.scopes;
-   scope=scopes.find(s=>scope&&scopeKey(s)===scopeKey(scope))??scopes[0]??null;
-   if(scope){const next=await api('/api/workspace?'+query());if(mine!==epoch)return;state=next;projectId=next.projects.some(p=>p.projectId===projectId)?projectId:next.projects[0]?.projectId;notice='Workspace loaded. Saved decisions are up to date.';}
+   if(selectedReview){
+    scope=scopes.find(s=>s.scopeKind==='personal'&&s.scopeId===selectedReview.scopeId)??null;
+    if(!scope){error='Selected personal review is no longer authorized. Choose a currently approved workspace.';return;}
+   }else scope=scopes.find(s=>scope&&scopeKey(s)===scopeKey(scope))??scopes[0]??null;
+   if(scope){
+    const next=await api('/api/workspace?'+query());if(mine!==epoch)return;
+    if(selectedReview&&(next.scope?.scopeKind!=='personal'||next.scope?.scopeId!==scope.scopeId||
+      next.execution!=='record_only'))throw Error('Selected personal review scope could not be verified.');
+    state=next;
+    if(selectedReview){
+     const action=next.actions.find(a=>a.recordId===selectedReview.recordId&&
+      a.projectId===selectedReview.projectId&&a.status==='proposed');
+     if(action&&next.projects.some(p=>p.projectId===selectedReview.projectId)){
+      projectId=selectedReview.projectId;reviewId=action.recordId;
+      notice='Selected proposal revalidated. Review before recording a decision; nothing executed.';
+     }else{
+      projectId=next.projects[0]?.projectId;reviewId=null;
+      notice='Selected proposal is no longer pending or authorized. Choose a current proposal.';
+     }
+    }else{
+     projectId=next.projects.some(p=>p.projectId===projectId)?projectId:next.projects[0]?.projectId;
+     notice='Workspace loaded. Saved decisions are up to date.';
+    }
+   }
   }catch(e){if(mine===epoch){state=null;error=e.message;if(e.code==='workspace_source_requires_review'){try{sourceReview=await api('/api/workspace/review?'+query());if(mine!==epoch)return;}catch(reviewError){error=reviewError.message;}}}}
-  finally{if(mine===epoch){busy=false;draw(returnFocus);}}
+  finally{if(mine===epoch){busy=false;draw(selectedReview?(reviewId?'ws-review-title':'ws-status'):returnFocus);if(selectedReview&&reviewId)document.getElementById('ws-review-title')?.scrollIntoView({block:'nearest'});}}
  }
  async function mutate(kind,input){
   if(busy||!state)return;busy=true;error='';notice='';draw();
@@ -106,6 +128,12 @@
   else if('wsCancel'in d){reviewId=null;draw('ws-project-title');}
   else if(d.wsDecision){const a=state?.actions.find(x=>x.recordId===reviewId);if(a)mutate('decide',{operationId:crypto.randomUUID(),recordId:a.recordId,decision:d.wsDecision,expectedRevision:a.revision});}
  });
- globalThis.StationWorkspace={mounted(){if(!host()){if(recovering){recoveryEpoch++;recovering=false;busy=false;}pendingRestore=null;pendingTransfer=null;recoveryMode=null;return;}if(!started){started=true;load(false);}else draw();}};
+ globalThis.StationWorkspace={mounted(){
+  if(!host()){if(recovering){recoveryEpoch++;recovering=false;busy=false;}pendingRestore=null;pendingTransfer=null;recoveryMode=null;return;}
+  const selectedReview=globalThis.StationHomeEvidence?.takeReview?.('workspace')??null;
+  if(selectedReview){started=true;void load(false,selectedReview);}
+  else if(!started){started=true;load(false);}
+  else draw();
+ }};
  globalThis.StationWorkspace.mounted();
 })();
