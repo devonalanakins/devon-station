@@ -9,7 +9,13 @@ const {join}=require('node:path');
 
   for(const width of [1440,390,320]){
    const context=await browser.newContext({viewport:{width,height:900},isMobile:width<500,hasTouch:width<500,extraHTTPHeaders:{'Cf-Access-Jwt-Assertion':token()},reducedMotion:'reduce'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.goto(server.url+'/');await page.locator('.home-hero').waitFor();await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
+   await page.goto(server.url+'/');await page.locator('.home-hero').waitFor();
+   await page.addScriptTag({content:require('axe-core').source});
+   const homeA11y=await page.evaluate(async()=>(
+    await axe.run(document.querySelector('#view'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa']}})
+   ).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})));
+   if(homeA11y.length)throw Error('Home accessibility at '+width+': '+JSON.stringify(homeA11y));
+   await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
    await page.goto(server.url+'/#workspace');await page.getByText('Workspace loaded. Saved decisions are up to date.').waitFor();
    await page.getByLabel('Action to review').fill('Synthetic browser action '+width);await page.getByRole('button',{name:'Create proposal',exact:true}).click();await page.getByText('Proposal saved. Review it before deciding.').waitFor();
    const article=page.locator('.ws-action').filter({hasText:'Synthetic browser action '+width});await article.getByRole('button',{name:'Review proposal'}).click();
@@ -24,11 +30,20 @@ const {join}=require('node:path');
    // The app's original navigation and capture workflow still coexist.
    await page.getByRole('button',{name:'Quick capture',exact:true}).click();await page.getByLabel('Thought or next action').fill('Retain original capture '+width);await page.locator('#capture-form button[type=submit]').click();await page.getByText('Retain original capture '+width,{exact:true}).waitFor();
    await page.locator('#nav [data-go=home]').click();await page.locator('.home-hero').waitFor();
+   await page.locator('#toast').waitFor({state:'hidden'});
    await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
    await page.locator('#nav [data-go=today]').click();await page.getByRole('heading',{name:'Today',exact:true}).waitFor();
    const chosen=page.locator('.today-item').filter({hasText:'Retain original capture '+width});
    await chosen.getByRole('button',{name:'Focus today'}).click();
    await page.getByText('1 of 3 selected').waitFor();
+   await page.locator('.today-item-actions [aria-pressed=true]').focus();
+   if(!(await page.locator('.today-item-actions [aria-pressed=true]').evaluate(e=>document.activeElement===e)))throw Error('Today focus keyboard focus not retained');
+   await page.addScriptTag({content:require('axe-core').source});
+   const todayA11y=await page.evaluate(async()=>(
+    await axe.run(document.querySelector('#view'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa']}})
+   ).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})));
+   if(todayA11y.length)throw Error('Today accessibility at '+width+': '+JSON.stringify(todayA11y));
+   await page.locator('#toast').waitFor({state:'hidden'});
    await page.screenshot({path:join(__dirname,'today-'+width+'.png'),fullPage:true});
    await page.locator('#nav [data-go=home]').click();
    await page.locator('.home-focus').getByText('Retain original capture '+width).waitFor();
