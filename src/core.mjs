@@ -122,8 +122,8 @@ export function triageCapture(local,id,choice,now=new Date().toISOString()){
   const {triage:previous,...withoutTriage}=d;
   return {...withoutTriage,...(lane?{triage:lane}:{}),updatedAt:now};
  });
- const outcomes=(Array.isArray(local?.outcomes)?local.outcomes:[]).filter(x=>
-  !(['Parked','Discarded'].includes(lane)&&x===id.slice(6)));
+ // Reclassification always releases the focus slot; only Focus today promotes to Now.
+ const outcomes=(Array.isArray(local?.outcomes)?local.outcomes:[]).filter(x=>x!==id.slice(6));
  return {drafts:updated,outcomes};
 }
 
