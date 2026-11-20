@@ -75,9 +75,11 @@ function home(){
  '<p class="tiny muted">No live service, pending approval, calendar event or deployment is inferred from local notes.</p></section></div>';
 }
 function today(){
- const data=todayCaptures(local),day=localDay(),groups=plannedCaptureGroups(data.active,day),focusedIds=new Set(data.focused.map(d=>d.id));
+ const data=todayCaptures(local),day=localDay(),focusedIds=new Set(data.focused.map(d=>d.id));
+ const actionable=data.active.filter(d=>d.triage!=='Next'||focusedIds.has(d.id));
+ const groups=plannedCaptureGroups(actionable,day);
  const rank=d=>d.planDate===day?0:d.planDate&&d.planDate<day?1:d.planDate&&d.planDate>day?2:3;
- const shown=[...data.focused,...data.active.filter(d=>!focusedIds.has(d.id)).sort((a,b)=>
+ const shown=[...data.focused,...actionable.filter(d=>!focusedIds.has(d.id)).sort((a,b)=>
   rank(a)-rank(b)||(a.planDate??'').localeCompare(b.planDate??'')||a.title.localeCompare(b.title))].slice(0,20);
  return heading('Today','Choose up to three captured items. Private sync depends on your connection; this is not a calendar.', '<button type="button" class="primary" data-capture>New capture</button>')+
  '<div class="today-layout"><section class="panel"><div class="panel-head"><h2>Choose your focus</h2><span class="tiny muted">'+data.focused.length+' of 3 selected</span></div>'+
@@ -92,7 +94,7 @@ function today(){
    (d.planDate?'<button type="button" data-calendar-file="'+esc(d.id)+'">Calendar file</button>':'')+
    '<button type="button" data-archive="'+esc(d.id)+'">Archive</button></div></article>';
  }).join(''):'<div class="today-empty"><h3>No captures yet</h3><p>Capture one non-sensitive responsibility to begin. Nothing has been imported or invented.</p><button type="button" data-capture>Capture a thought</button></div>')+
- (data.active.length>20?'<p class="tiny muted">Showing 20 of '+data.active.length+' local captures. Open Captures for the full list.</p>':'')+
+ (actionable.length>20?'<p class="tiny muted">Showing 20 of '+actionable.length+' actionable captures. Open Noise Filter for Next and parked items.</p>':'')+
  '<div class="button-row today-footer-actions"><button type="button" data-go="inbox">Open Noise Filter</button><button type="button" data-go="command">Inspect project evidence</button></div></section>'+
  '<aside class="panel today-connections"><h2>Reviews and commitments</h2><p class="tiny muted">Only your authorized personal decisions and Work metadata appear here.</p>'+ 
  '<div id="station-home-evidence" class="home-evidence" aria-label="Owner-scoped review checks">'+
