@@ -251,3 +251,14 @@ body[data-motion=reduced] .monogram:hover,body[data-motion=reduced] .area-tile:h
 /* Explicit follow-up transfer: importing a calendar never persists a capture by itself. */
 .calendar-import-plan{min-height:44px;align-self:flex-start;margin-top:5px;font-size:11px}
 .capture-source-note{padding:10px 12px;border:1px solid var(--line);border-radius:10px;line-height:1.6}
+
+/* DS011 owner-only Noise Filter: compact classification, no extra navigation layer. */
+.noise-filter-panel{display:grid;gap:12px}
+.noise-filter-tabs{display:flex;flex-wrap:wrap;gap:5px}
+.noise-filter-tabs button{min-height:40px}
+.noise-filter-item{margin:0;padding:15px 0;border-bottom:1px solid var(--line)}
+.noise-filter-item h3{overflow-wrap:anywhere}
+.noise-filter-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.noise-filter-choice{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.noise-filter-choice select{width:auto;max-width:160px;min-height:44px}
+@media(max-width:540px){.noise-filter-choice{width:100%;justify-content:space-between}.noise-filter-choice select{flex:1;max-width:190px}}
