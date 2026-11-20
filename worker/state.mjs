@@ -33,6 +33,7 @@ export function validateOwnerState(raw){
   const d={id:x.id,title:limitedText(x.title,500,'draft',2),area:x.area,project:null,destination:null,state:x.state,createdAt:timestamp(x.createdAt)};
   if(x.updatedAt!=null)d.updatedAt=timestamp(x.updatedAt);
   if(x.planDate!=null)d.planDate=planDay(x.planDate);
+  if(x.triage!=null){if(!['Next','Parked','Discarded'].includes(x.triage))fail('invalid_triage');d.triage=x.triage;}
   return d;
  });unique(drafts);
  const feedback=raw.feedback.map(x=>{
