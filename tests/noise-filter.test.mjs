@@ -89,6 +89,8 @@ test('existing capture HTML and app remain parseable and use explicit owner clas
  assert.match(app,/triageCapture\(local,triageId,e\.target\.value\)/);
  assert.match(app,/data-inbox-filter/);
  assert.match(app,/Open Noise Filter/);
+ assert.match(app,/actionable=data\.active\.filter\(d=>d\.triage!=='Next'\|\|focusedIds\.has\(d\.id\)\)/);
+ assert.match(app,/plannedCaptureGroups\(actionable,day\)/);
  assert.match(css,/noise-filter-choice/);
  assert.doesNotMatch(app,/auto.*publish.*triage|send.*mail.*triage/i);
 });
