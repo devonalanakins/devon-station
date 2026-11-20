@@ -65,16 +65,23 @@ export function captureDraft(input,projects,now=new Date().toISOString(),id=loca
  const title=String(input?.title??'').trim();if(title.length<2||title.length>500)throw Error('Write a title between 2 and 500 characters.');
  if(/\b(patient|diagnosis|medical record|social security number|ssn|password|bank account|credit card number)\b|(?:sk-|ghp_|github_pat_|xox[baprs]-)[a-zA-Z0-9_-]{10,}/i.test(title))throw Error('Keep clinical details, credentials and financial identifiers out of this console.');
  const area=AREAS.includes(input.area)?input.area:'Devon Works';const project=projects.find(p=>p.id===input.project&&p.area===area);
- const date=planningDate(input?.planDate);return {id,title,area,project:project?.id??null,destination:project?.source??null,state:'Draft',createdAt:now,...(date?{planDate:date}:{})};
+ const date=planningDate(input?.planDate),triage=captureTriage(input?.triage);return {id,title,area,project:project?.id??null,destination:project?.source??null,state:'Draft',createdAt:now,...(date?{planDate:date}:{}),...(triage?{triage}:{})};
 }
 export function addDraft(items,draft){const duplicate=items.find(x=>x.title.toLowerCase()===draft.title.toLowerCase()&&x.area===draft.area&&x.project===draft.project&&x.state!=='Archived');return {items:duplicate?items:[draft,...items].slice(0,200),duplicate:!!duplicate};}
-export function updateDraft(items,id,input,projects){const original=items.find(x=>x.id===id);if(!original)throw Error('This local draft no longer exists.');const draft=captureDraft(input,projects,original.createdAt,id);const duplicate=addDraft(items.filter(x=>x.id!==id),draft).duplicate;if(duplicate)throw Error('Another local draft already contains that idea.');return items.map(x=>x.id===id?{...draft,state:original.state,updatedAt:new Date().toISOString()}:x);}
+export function updateDraft(items,id,input,projects){const original=items.find(x=>x.id===id);if(!original)throw Error('This local draft no longer exists.');const draft=captureDraft({...input,triage:input?.triage??original.triage},projects,original.createdAt,id);const duplicate=addDraft(items.filter(x=>x.id!==id),draft).duplicate;if(duplicate)throw Error('Another local draft already contains that idea.');return items.map(x=>x.id===id?{...draft,state:original.state,updatedAt:new Date().toISOString()}:x);}
+export const TRIAGE_CHOICES=['Inbox','Next','Parked','Discarded'];
+/** Absence of a triage choice keeps older records in Inbox. */
+export function captureTriage(value){
+ if(value==null||value==='Inbox')return null;
+ if(!TRIAGE_CHOICES.includes(value))throw Error('Choose a valid noise-filter destination.');
+ return value;
+}
 export const FEEDBACK_TYPES=['Design','Behavior','Feature','Bug'];
 export function createFeedback(input,now=new Date().toISOString(),id=localDraftId()){const note=String(input?.note??'').trim();if(note.length<3||note.length>1200)throw Error('Write feedback between 3 and 1,200 characters.');if(/\b(?:patient|diagnosis|medical record|social security number|ssn|password|bank account|credit card number)\b|(?:sk-|ghp_|github_pat_|xox[baprs]-)[a-zA-Z0-9_-]{10,}/i.test(note))throw Error('Keep credentials out of feedback.');return {id,section:SECTIONS.includes(input.section)?input.section:'global',category:FEEDBACK_TYPES.includes(input.category)?input.category:'Design',note,state:'Open',createdAt:now};}
 export function feedbackText(items){return items.map(x=>`[${x.category} · ${x.section} · ${x.state}] ${x.note}`).join('\n\n');}
 // Focus marks are user-owned and must not be silently deleted merely because
 // a read-only Notion project listing is empty, partial, or temporarily stale.
-export function restoreLocal(raw,projects){if(raw?.version!==1)return {prefs:{...DEFAULTS},drafts:[],feedback:[],outcomes:[],history:[]};const drafts=[];for(const x of (Array.isArray(raw.drafts)?raw.drafts:[]).slice(0,200)){try{if(!/^local:[a-zA-Z0-9-]+$/.test(x.id)||!['Draft','Routed locally','Archived'].includes(x.state))continue;let safe=x;try{planningDate(x.planDate)}catch{safe={...x,planDate:null}}const d=captureDraft(safe,projects,x.createdAt,x.id);d.state=x.state;if(typeof x.updatedAt==='string'&&Number.isFinite(Date.parse(x.updatedAt)))d.updatedAt=x.updatedAt;drafts.push(d);}catch{}}const feedback=[];for(const x of (Array.isArray(raw.feedback)?raw.feedback:[]).slice(0,100)){try{if(!/^local:[a-zA-Z0-9-]+$/.test(x.id)||!['Open','Archived'].includes(x.state))continue;const f=createFeedback(x,x.createdAt,x.id);f.state=x.state;feedback.push(f);}catch{}}
+export function restoreLocal(raw,projects){if(raw?.version!==1)return {prefs:{...DEFAULTS},drafts:[],feedback:[],outcomes:[],history:[]};const drafts=[];for(const x of (Array.isArray(raw.drafts)?raw.drafts:[]).slice(0,200)){try{if(!/^local:[a-zA-Z0-9-]+$/.test(x.id)||!['Draft','Routed locally','Archived'].includes(x.state))continue;let safe=x;try{planningDate(x.planDate)}catch{safe={...safe,planDate:null}}try{captureTriage(x.triage)}catch{safe={...safe,triage:null}}const d=captureDraft(safe,projects,x.createdAt,x.id);d.state=x.state;if(typeof x.updatedAt==='string'&&Number.isFinite(Date.parse(x.updatedAt)))d.updatedAt=x.updatedAt;drafts.push(d);}catch{}}const feedback=[];for(const x of (Array.isArray(raw.feedback)?raw.feedback:[]).slice(0,100)){try{if(!/^local:[a-zA-Z0-9-]+$/.test(x.id)||!['Open','Archived'].includes(x.state))continue;const f=createFeedback(x,x.createdAt,x.id);f.state=x.state;feedback.push(f);}catch{}}
  return {prefs:settings(raw.prefs),drafts,feedback,outcomes:Array.isArray(raw.outcomes)?[...new Set(raw.outcomes.filter(x=>typeof x==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(x)))].slice(0,3):[],history:Array.isArray(raw.history)?raw.history.filter(x=>typeof x?.action==='string'&&typeof x?.at==='string').slice(0,30):[]};}
 /** Tab-scoped pending changes are advisory until sanitized by restoreLocal. */
 export function readTabRecoveryJournal(journal){
@@ -88,7 +95,7 @@ export function readTabRecoveryJournal(journal){
 
 /** Owner-selected focus is a local preference, not task completion or a calendar commitment. */
 export function todayCaptures(local){
- const active=(Array.isArray(local?.drafts)?local.drafts:[]).filter(d=>d?.state!=='Archived'&&/^local:[a-zA-Z0-9-]+$/.test(d?.id));
+ const active=(Array.isArray(local?.drafts)?local.drafts:[]).filter(d=>d?.state!=='Archived'&&!['Parked','Discarded'].includes(d?.triage)&&/^local:[a-zA-Z0-9-]+$/.test(d?.id));
  const focus=new Set(Array.isArray(local?.outcomes)?local.outcomes:[]);
  return {active,focused:active.filter(d=>focus.has(d.id.slice(6))).slice(0,3)};
 }
@@ -101,6 +108,23 @@ export function changeTodayFocus(local,id){
  if(selected.includes(id))return selected.filter(x=>x!==id);
  if(selected.length>=3)throw Error('Choose up to three focus items. Remove one before adding another.');
  return [...selected,id];
+}
+
+/** Reclassify one owner's capture without deleting it or adding a second task store. */
+export function triageCapture(local,id,choice,now=new Date().toISOString()){
+ const lane=captureTriage(choice);
+ if(typeof id!=='string'||!/^local:[a-zA-Z0-9-]{1,90}$/.test(id))throw Error('Invalid local capture.');
+ const drafts=Array.isArray(local?.drafts)?local.drafts:[];
+ const original=drafts.find(d=>d.id===id);
+ if(!original||original.state==='Archived')throw Error('Restore an archived capture before classifying it.');
+ const updated=drafts.map(d=>{
+  if(d.id!==id)return d;
+  const {triage:previous,...withoutTriage}=d;
+  return {...withoutTriage,...(lane?{triage:lane}:{}),updatedAt:now};
+ });
+ const outcomes=(Array.isArray(local?.outcomes)?local.outcomes:[]).filter(x=>
+  !(['Parked','Discarded'].includes(lane)&&x===id.slice(6)));
+ return {drafts:updated,outcomes};
 }
 
 export function validateProject(p){const missing=['id','name','owner','area','next','gate','source'].filter(k=>!p?.[k]);if(missing.length)throw Error('Missing project fields: '+missing.join(', '));if(!AREAS.includes(p.area))throw Error('Unknown project area');if(!safeURL(p.source))throw Error('Source must be an HTTPS URL without credentials');if(p.repo&&!/^https:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(p.repo))throw Error('Repository must identify one GitHub repository');return true;}
