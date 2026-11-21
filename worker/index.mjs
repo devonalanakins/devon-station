@@ -51,33 +51,37 @@ const email = value => nonempty(value) ? value.trim().toLowerCase() : null;
 
 export function resolveOwnerIdentity(identity, env = {}) {
   if (!identity || !nonempty(identity.subject) || !nonempty(identity.email)) return null;
-  const legacyEmail = email(env.OWNER_EMAIL);
-  if (!legacyEmail) return null;
+  const primaryEmail = email(env.OWNER_EMAIL);
+  if (!primaryEmail) return null;
   const signedEmail = email(identity.email);
   const signedSubject = identity.subject.trim();
 
-  // Backward-compatible path for the existing verified owner account.
-  // When transition is armed, pin the existing subject too: never accept
-  // another Access account merely because it reports the same email.
-  if (signedEmail === legacyEmail) {
-    if (env.OWNER_ALIAS_ENABLED === 'true' &&
-        (!nonempty(env.OWNER_LEGACY_SUB) || signedSubject !== env.OWNER_LEGACY_SUB)) return null;
-    if (nonempty(env.OWNER_LEGACY_SUB) && signedSubject !== env.OWNER_LEGACY_SUB) return null;
-    return {subject:signedSubject, email:signedEmail};
+  // Preserve the existing production behavior until the separately approved
+  // identity-continuity switch is enabled and all identities are pinned.
+  if (env.OWNER_ALIAS_ENABLED !== 'true') {
+    return signedEmail === primaryEmail
+      ? {subject:signedSubject, email:signedEmail} : null;
   }
 
-  // Disabled unless all three independently reviewed, exact-match bindings
-  // are present. The new subject is never used for existing storage keys.
-  if (env.OWNER_ALIAS_ENABLED !== 'true' ||
-      !nonempty(env.OWNER_LEGACY_SUB) ||
-      !nonempty(env.OWNER_CURRENT_SUB) ||
-      !email(env.OWNER_CURRENT_EMAIL) ||
-      env.OWNER_CURRENT_SUB === env.OWNER_LEGACY_SUB ||
-      email(env.OWNER_CURRENT_EMAIL) === legacyEmail ||
-      signedSubject !== env.OWNER_CURRENT_SUB ||
-      signedEmail !== email(env.OWNER_CURRENT_EMAIL)) return null;
+  const canonicalSubject = env.OWNER_LEGACY_SUB;
+  const currentSubject = env.OWNER_CURRENT_SUB;
+  const currentEmail = email(env.OWNER_CURRENT_EMAIL);
+  if (!nonempty(canonicalSubject) || !nonempty(currentSubject) ||
+      !currentEmail || canonicalSubject === currentSubject) return null;
 
-  return {subject:env.OWNER_LEGACY_SUB, email:signedEmail};
+  // Works with either existing configuration:
+  // 1. OWNER_EMAIL still points to the historical email (both allowed during cutover).
+  // 2. OWNER_EMAIL already points to the current email (retired email denied).
+  // The current identity must match its signed email AND signed Access UUID.
+  if (signedEmail === currentEmail) {
+    return signedSubject === currentSubject
+      ? {subject:canonicalSubject, email:signedEmail} : null;
+  }
+  if (primaryEmail !== currentEmail && signedEmail === primaryEmail) {
+    return signedSubject === canonicalSubject
+      ? {subject:canonicalSubject, email:signedEmail} : null;
+  }
+  return null;
 }
 
 export function createStation(assets,auth=authorizedIdentity,transport=fetch,imapSocket=null){return {async fetch(request,env,ctx){try{
