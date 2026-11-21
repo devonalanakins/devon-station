@@ -6,7 +6,7 @@ import {runInNewContext} from 'node:vm';
 const script = readFileSync(new URL('../tools/mail-owner-canary-console.mjs', import.meta.url), 'utf8');
 const liveOrigin = 'https://ds.devonakins.com';
 const safeCsp = "default-src 'none'; connect-src 'self'; form-action 'none'";
-const make = ({origin=liveOrigin,title='Devon Station',app=true,frame=false,csp=safeCsp,fetchImpl}={}) => {
+const make = ({origin=liveOrigin,title='Dadog',app=true,frame=false,csp=safeCsp,fetchImpl}={}) => {
   const events=[];const calls=[];
   const top={};const self=frame?{}:top;
   const context={
@@ -71,4 +71,12 @@ test('an Access HTML interstitial or expired session aborts without probing mail
     assert.equal(x.events.length,2);
     assert.notEqual(x.events[1].result,'OWNER_SESSION_VERIFIED');
   }
+});
+
+test('legacy title compatibility remains during Dadog rename without relaxing origin or session gates',async()=>{
+ for(const title of ['Devon Station','DevonStation']){
+  const x=await run(make({title}));
+  assert.deepEqual(x.events.map(y=>y.result),['APP_CONFIRMED','OWNER_SESSION_VERIFIED','STATUS_RECEIVED']);
+  assert.deepEqual(x.calls.map(y=>y.path),['/api/session','/api/mail/status']);
+ }
 });
