@@ -94,7 +94,7 @@
    if(mode==='export'){
     const transfer=await api('/api/workspace/backup?'+scopeQuery);if(!current())return;
     const encrypted=await globalThis.StationWorkspaceBackup.encrypt(transfer,pass);if(!current())return;
-    const url=URL.createObjectURL(new Blob([JSON.stringify(encrypted)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='devonstation-encrypted-journal.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const url=URL.createObjectURL(new Blob([JSON.stringify(encrypted)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='dadog-encrypted-journal.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     recoveryMode=null;notice='Encrypted backup prepared. Keep the download and passphrase separately.';
    }else{
     let decrypted;try{const text=await file.text();if(!current())return;decrypted=await globalThis.StationWorkspaceBackup.decrypt(JSON.parse(text),pass);}catch{throw Error('Could not unlock this backup. Check the file and passphrase.');}
