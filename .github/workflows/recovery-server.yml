@@ -108,6 +108,7 @@ jobs:
             tools/assistant-*.png
             tools/assistant-browser-results.json
             tools/home-*.png
+            tools/orbital-*.png
             tools/today-*.png
             tools/home-evidence-*.png
             tools/home-evidence-browser-results.json
