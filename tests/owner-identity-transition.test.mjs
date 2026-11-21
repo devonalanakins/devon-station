@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {resolveOwnerIdentity} from '../worker/access.mjs';
-import {createStation} from '../worker/index.mjs';
+import {createStation,resolveOwnerIdentity} from '../worker/index.mjs';
 
 const oldUser={subject:'old-signed-owner-uuid',email:'owner@legacy.example.test'};
 const newUser={subject:'new-signed-owner-uuid',email:'owner@current.example.test'};
