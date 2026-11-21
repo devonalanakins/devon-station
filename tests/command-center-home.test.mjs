@@ -8,7 +8,7 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('command center presents only actual local capture and focus counts',()=>{
  const app=read('src/app.js');
  assert.doesNotThrow(()=>new Script(app));
- assert.match(app,/plannedToday=data\.active\.filter\(d=>d\.planDate===localDay\(\)\)\.length/);
+ assert.match(app,/plannedToday=plannedCaptureGroups\(data\.active\.filter\(d=>d\.triage!=='Next'/);
  assert.match(app,/data\.focused\.length\+' <small>\/ 3<\/small>'/);
  assert.match(app,/data\.active\.length/);
  assert.match(app,/Current focus items/);
