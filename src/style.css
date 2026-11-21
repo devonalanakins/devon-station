@@ -478,3 +478,55 @@ button.primary:hover{background:linear-gradient(140deg,#a4ffe5,#44e0b3)}
 @media(prefers-reduced-motion:reduce){
  .page-home .home-orbital-ring,.page-home .home-orbital-node{animation:none}
 }
+
+
+/* Dadog Hatch 001: visual-only, owner-scoped companion on the current Home. */
+.page-home .home-dadog{
+ grid-column:1/-1;display:grid;grid-template-columns:minmax(175px,.48fr) minmax(0,1fr);
+ align-items:center;gap:clamp(12px,3vw,32px);position:relative;overflow:hidden;
+ border:1px solid #8270bf91;border-radius:22px;
+ background:radial-gradient(ellipse 56% 90% at 16% 48%,#34346a6b,transparent 85%),
+  linear-gradient(120deg,#0e1d37,#0c1c30 65%,#0d2229);
+ padding:clamp(18px,3vw,29px);min-height:250px;
+ box-shadow:inset 0 1px #cbbafc20,0 24px 48px -38px #000d;
+}
+.page-home .dadog-visual{position:relative;display:grid;place-items:center;min-height:194px;max-height:245px}
+.page-home .dadog-visual:before{
+ content:"";position:absolute;inset:11% 18%;border-radius:50%;
+ background:radial-gradient(circle,#8173e54d,transparent 70%);filter:blur(23px);pointer-events:none
+}
+.page-home .dadog-visual svg{
+ position:relative;max-width:245px;width:min(100%,245px);height:auto;
+ animation:dadog-float 6.5s ease-in-out infinite;
+ filter:drop-shadow(0 0 15px #6c69d744)
+}
+.page-home .dadog-tail{transform-origin:173px 166px;animation:dadog-wag 7s ease-in-out infinite}
+.page-home .dadog-awake-eyes{opacity:0}
+.page-home .home-dadog[data-dadog-state=awake] .dadog-awake-eyes{opacity:1}
+.page-home .home-dadog[data-dadog-state=awake] .dadog-sleep-eyes{opacity:0}
+.page-home .home-dadog[data-dadog-state=awake] .dadog-visual svg{filter:drop-shadow(0 0 20px #77f7e373)}
+.page-home .dadog-copy{position:relative;z-index:1}
+.page-home .dadog-copy h2{
+ font-family:Georgia,'Iowan Old Style',Palatino,serif;font-size:clamp(24px,3vw,34px);
+ font-weight:500;line-height:1.14;letter-spacing:-.045em;margin:9px 0
+}
+.page-home .dadog-copy>p{max-width:63ch;color:#c0ccd9;font-size:12px;line-height:1.7;margin:9px 0}
+.page-home .dadog-copy .dadog-status{color:#a9f3e1}
+.page-home .dadog-copy .button-row{margin:14px 0;gap:8px}
+.page-home .dadog-copy .button-row button{min-height:44px;border-radius:11px}
+.page-home .dadog-copy .button-row [data-dadog-toggle]{border-color:#9c93d696;background:#302d596e}
+.page-home .dadog-copy .button-row [data-dadog-toggle][aria-pressed=true]{border-color:#75eadac9;background:#194e527a}
+@keyframes dadog-float{0%,100%{transform:translateY(2px)}50%{transform:translateY(-7px)}}
+@keyframes dadog-wag{0%,80%,100%{transform:rotate(0deg)}87%{transform:rotate(7deg)}93%{transform:rotate(-4deg)}}
+@media(max-width:540px){
+ .page-home .home-dadog{grid-template-columns:1fr;gap:0;padding:20px}
+ .page-home .dadog-visual{min-height:145px;max-height:170px}
+ .page-home .dadog-visual svg{max-width:172px}
+ .page-home .dadog-copy h2{font-size:27px}
+ .page-home .dadog-copy .button-row button{flex:1 1 auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .page-home .dadog-visual svg,.page-home .dadog-tail{animation:none}
+}
+body[data-motion=reduced] .page-home .dadog-visual svg,
+body[data-motion=reduced] .page-home .dadog-tail{animation:none}
