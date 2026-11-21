@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {resolveOwnerIdentity} from '../worker/owner-identity.mjs';
+import {resolveOwnerIdentity} from '../worker/access.mjs';
+import {createStation} from '../worker/index.mjs';
 
 const oldUser={subject:'old-signed-owner-uuid',email:'owner@legacy.example.test'};
 const newUser={subject:'new-signed-owner-uuid',email:'owner@current.example.test'};
@@ -47,4 +48,18 @@ test('no unsigned, anonymous, header-derived or malformed identity can enter',()
 test('email formatting is normalized without altering the signed identity subject',()=>{
  assert.deepEqual(resolveOwnerIdentity({subject:newUser.subject,email:'OWNER@CURRENT.EXAMPLE.TEST'},cfg),
    {subject:oldUser.subject,email:newUser.email});
+});
+
+const stationOrigin='https://station.example.test';
+const station=createStation({},async()=>newUser);
+test('authenticated new owner gets existing owner API session without changing storage subject',async()=>{
+ const response=await station.fetch(new Request(stationOrigin+'/api/session'),{APP_ORIGIN:stationOrigin,...cfg},{});
+ assert.equal(response.status,200);
+ const result=await response.json();
+ assert.equal(result.authenticated,true);
+ assert.equal(result.mode,'owner');
+ const disabled=await station.fetch(new Request(stationOrigin+'/api/session'),{APP_ORIGIN:stationOrigin,...cfg,OWNER_ALIAS_ENABLED:'false'},{});
+ assert.equal(disabled.status,403);
+ const wrongSubjectStation=createStation({},async()=>({...newUser,subject:'impostor'}));
+ assert.equal((await wrongSubjectStation.fetch(new Request(stationOrigin+'/api/session'),{APP_ORIGIN:stationOrigin,...cfg},{})).status,403);
 });
