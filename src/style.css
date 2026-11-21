@@ -332,3 +332,149 @@ body[data-motion=reduced] .monogram:hover,body[data-motion=reduced] .area-tile:h
  .page-home .home-hero-footer{font-size:11px}
 }
 @media(max-width:350px){.page-home .home-signal-grid{grid-template-columns:1fr}}
+
+
+/* ORBITAL COMMAND CENTER: approved shared design direction, source only. */
+body{background:#050b11;color:#eef8f6}
+.workspace{
+ background:
+ radial-gradient(ellipse 66% 42% at 88% 0%,#205f6142,transparent 74%),
+ linear-gradient(140deg,#0b171e,#070d15 66%,#080e18)
+}
+.rail{
+ background:linear-gradient(180deg,#07141bcc,#071018fa 58%,#071116);
+ border-right-color:#2a585866
+}
+.topbar{
+ border-bottom-color:#4b807649;
+ background:linear-gradient(90deg,#091820ea,#0c1e25ee);
+ box-shadow:0 8px 30px #03080d6c
+}
+.topbar .eyebrow{font-weight:720;letter-spacing:.095em;color:#eafff8}
+.topbar .private-label{color:#83afa8}
+.search-trigger,.capture-top,.feedback-top{border-radius:12px}
+.search-trigger{border-color:#4271687a;background:#06151b99}
+.search-trigger:focus-visible,.nav-item:focus-visible{outline:3px solid #8ff8dd;outline-offset:2px}
+.page-heading .eyebrow{color:#8de6ce}
+.page-heading h1{letter-spacing:-.046em;font-weight:650}
+.page-heading p{color:#b0cac6;line-height:1.65}
+.panel{
+ background:linear-gradient(150deg,#132831bc 0%,#0b1b24da 60%,#09121ccc);
+ border:1px solid #315c5a91;
+ border-radius:18px;
+ box-shadow:inset 0 1px #e7ffff0b,0 22px 36px -34px #000d
+}
+.panel h2,.panel-head h2{font-weight:680;letter-spacing:-.022em}
+button:not(.nav-item):not(.monogram){border-radius:11px}
+button.primary{
+ background:linear-gradient(140deg,#77f1d3,#25bd9a 82%);
+ color:#05201c;font-weight:760;border-color:#99ffe394;
+ box-shadow:0 3px 18px #2cf1c72e,inset 0 1px #ecfffdb7
+}
+button.primary:hover{background:linear-gradient(140deg,#a4ffe5,#44e0b3)}
+.nav-item{border-radius:11px;font-size:12px}
+.nav-item[aria-current=page]{
+ background:linear-gradient(90deg,#1b735f8a,#164b5363);
+ color:#c6ffee;border-color:#47d8ae6b;
+ box-shadow:inset 0 0 0 1px #2acda71c,0 4px 22px #062d2c3d
+}
+.nav-item:hover{color:#e0fff6;background:#1b484a5c}
+.page-home .home-hero{
+ min-height:286px;
+ background:
+ radial-gradient(ellipse 80% 55% at 82% 72%,#1cb69e26,transparent 80%),
+ linear-gradient(115deg,#0e292d 0%,#09212b 48%,#071622 100%);
+ border-color:#4ba99c87;
+ box-shadow:inset 0 1px #e6ffff29,0 30px 66px #0007
+}
+.page-home .home-hero::before{
+ content:"";position:absolute;z-index:0;
+ width:760px;height:760px;right:-300px;top:-572px;
+ border-radius:50%;pointer-events:none;
+ background:
+ radial-gradient(ellipse at 37% 64%,#1d535b4d,transparent 45%),
+ radial-gradient(ellipse at 75% 82%,#70efe287,transparent 52%),
+ radial-gradient(ellipse at 40% 83%,#04101b 48%,#081924 60%,#07121c 70%);
+ box-shadow:0 1px 0 1px #8cfff1a8,0 0 22px 4px #57f5da43,0 0 70px 10px #25a9ab37;
+}
+.page-home .home-hero h2{
+ font-family:Georgia,'Iowan Old Style',Palatino,'Times New Roman',serif;
+ font-weight:520;line-height:1.1;letter-spacing:-.065em;
+ font-size:clamp(38px,4.7vw,59px);
+ text-wrap:balance
+}
+.page-home .home-hero>p:not(.home-hero-footer){
+ font-size:14px;max-width:59ch;color:#c7e1dc
+}
+.page-home .home-hero>.button-row{margin-top:23px}
+.page-home .home-signal{
+ border-color:#3a8b806e;
+ background:linear-gradient(155deg,#12352fdd,#0c1e26f2);
+ min-height:126px
+}
+.page-home .home-signal strong{color:#ebfff7}
+.page-home .home-signal-label{color:#8de9d2}
+.page-home .home-focus,.page-home .home-sources{
+ border-color:#398b8078;
+ background:linear-gradient(165deg,#0d282bab,#0a1924f2)
+}
+.orbital-route-layout{
+ display:grid;grid-template-columns:minmax(0,1.35fr) minmax(250px,.85fr);
+ gap:18px;align-items:stretch
+}
+.orbital-route-layout>.panel{padding:clamp(21px,3.2vw,31px)}
+.orbital-feature{
+ background:
+ radial-gradient(ellipse at 88% 10%,#39b6a727,transparent 65%),
+ linear-gradient(125deg,#103b39,#0c202b 76%)
+}
+.orbital-feature h2{
+ font-family:Georgia,'Iowan Old Style',Palatino,serif;
+ font-size:clamp(30px,3.1vw,42px);
+ font-weight:500;letter-spacing:-.04em;line-height:1.16;margin:11px 0
+}
+.orbital-feature p,.orbital-route-layout .panel>p{max-width:60ch;color:#bad0ce;line-height:1.75;font-size:13px}
+.orbital-feature .button-row{margin-top:27px}
+.orbital-route-note{
+ border-top:1px solid #417b7357;margin-top:25px;padding-top:16px;
+ color:#98b8b3;line-height:1.65;font-size:12px
+}
+.orbital-route-layout .source-link{margin-top:12px}
+.page-portfolio .filters,.page-infrastructure .filters{border:1px solid #2f5c588c;background:#10252cc5;border-radius:13px;padding:14px}
+.page-today .today-layout>.panel{background:linear-gradient(155deg,#102c32e8,#0b1926e8)}
+.page-today .today-item-actions button{min-height:44px}
+.page-command .hero{background:radial-gradient(ellipse at 84% 50%,#28858044,transparent 75%),linear-gradient(112deg,#103633,#111c2b)}
+.page-command .hero h2{font-family:Georgia,Palatino,serif;font-weight:520}
+.dialog-footer,.system-footer{color:#9dc1bc}
+@media(min-width:1100px){
+ .app{grid-template-columns:228px minmax(0,1fr)}
+ .rail{padding-left:14px;padding-right:14px}
+ .rail #nav{gap:5px}
+ .nav-item{padding:10px 12px;height:42px}
+ .nav-item svg{width:19px;height:19px}
+ .monogram::after{font-weight:720;color:#dcfff4}
+}
+@media(max-width:920px){
+ .orbital-route-layout{grid-template-columns:1fr}
+ .page-home .home-hero::before{right:-420px}
+}
+@media(max-width:540px){
+ .topbar{background:#0b1923ee}
+ .page-heading{flex-wrap:wrap}
+ .page-heading h1{font-size:25px}
+ .page-home .home-hero{min-height:298px}
+ .page-home .home-hero h2{font-size:39px;max-width:13ch}
+ .page-home .home-hero::before{right:-570px;top:-600px;opacity:.72}
+ .page-home .home-hero>p:not(.home-hero-footer){font-size:12px}
+ .page-home .home-signal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .page-home .home-signal{min-height:108px}
+ .orbital-route-layout>.panel{padding:22px}
+ .rail{background:#07171ff5;border-top:1px solid #43b09880}
+ .rail #nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .nav-item{font-size:10px}
+ .nav-item[aria-current=page]{background:#1c6c5d70}
+ .system-footer{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .page-home .home-orbital-ring,.page-home .home-orbital-node{animation:none}
+}
