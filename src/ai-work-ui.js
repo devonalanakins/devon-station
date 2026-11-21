@@ -1,4 +1,4 @@
-/* Owner-private job control mounted in the recovered DevonStation shell. */
+/* Owner-private job control mounted in the recovered Dadog shell. */
 (()=>{
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const host=()=>document.getElementById('station-ai-work');
