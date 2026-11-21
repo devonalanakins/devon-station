@@ -40,7 +40,7 @@ const {join}=require('node:path');
    const prepared=page.waitForEvent('download');
    await chosen.getByRole('button',{name:'Calendar file'}).click();
    const file=await prepared;
-   if(file.suggestedFilename()!=='devonstation-plan-2026-12-31.ics')throw Error('Incorrect explicit calendar filename');
+   if(file.suggestedFilename()!=='dadog-plan-2026-12-31.ics')throw Error('Incorrect explicit calendar filename');
    const content=readFileSync(await file.path(),'utf8');
    if(!content.includes('DTSTART;VALUE=DATE:20261231')||!content.includes('TRANSP:TRANSPARENT')||!content.includes('STATUS:TENTATIVE'))throw Error('Calendar file is not a safe all-day plan');
    if(!content.includes('Retain original capture '+width))throw Error('Export does not match the selected capture');
