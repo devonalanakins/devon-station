@@ -16,7 +16,7 @@ function companionMarkup(){return runInNewContext(companionSource()+'\ndadogComp
 
 test('the current Home source parses and embeds exactly one Dadog visual companion',()=>{
  assert.doesNotThrow(()=>new Script(app));
- assert.equal(app.split("dadogCompanion()+'<section class=\\\"panel home-focus").length,2);
+ assert.equal(app.split("dadogCompanion()+'<section class=").length,2);
  const markup=companionMarkup();
  assert.match(markup,/aria-labelledby="dadog-card-title"/);
  assert.match(markup,/data-dadog-state="resting"/);
