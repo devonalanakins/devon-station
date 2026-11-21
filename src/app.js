@@ -58,11 +58,11 @@ function todayFocusCard(d){
  return '<article class="today-focus-card"><strong>'+esc(d.title)+'</strong><span>'+esc(d.area)+(d.planDate?' · Planned '+esc(planDayLabel(d.planDate)):' · No date set')+' · Owner capture</span></article>';
 }
 function home(){
- const data=todayCaptures(local);
+ const data=todayCaptures(local),plannedToday=data.active.filter(d=>d.planDate===localDay()).length;
  return heading('Your personal operating space.','Choose one useful action. Keep every source and permission boundary intact.',tag('Owner first'))+
- '<div class="home-layout"><section class="panel home-hero"><span class="eyebrow">DEVONSTATION / HOME</span>'+
- '<h2>What matters next?</h2><p>Capture a responsibility, choose a focus for today, or inspect source-backed development evidence. No external work starts without authorization.</p>'+
- '<div class="button-row home-actions"><button type="button" class="primary" data-capture>Capture a thought</button><button type="button" data-go="today">Plan Today</button><button type="button" data-go="command">Open Assistant</button></div></section>'+
+ '<div class="home-layout"><section class="panel home-hero"><div class="home-orbital-field" aria-hidden="true"><span class="home-orbital-ring"></span><span class="home-orbital-node"></span></div><span class="eyebrow">DEVONSTATION / PRIVATE COMMAND CENTER</span>'+
+ '<h2>What matters next?</h2><p>Focus. Create. Research. Ship. Capture a responsibility, choose your next priority, or inspect source-backed work. No external action runs without authorization.</p>'+
+ '<div class="button-row home-actions"><button type="button" class="primary" data-capture>+ Quick capture</button><button type="button" data-go="today">Plan Today</button><button type="button" data-go="command">Open Assistant</button></div>'+ '<p class="home-hero-footer"><span class="home-hero-spark" aria-hidden="true"></span> Personal focus, private by default. Nothing runs or publishes automatically.</p></section>'+ '<section class="home-signal-grid" aria-label="Local workspace signals">'+ '<div class="home-signal"><span class="home-signal-label">FOCUS / OWNER SELECTED</span><strong>'+data.focused.length+' <small>/ 3</small></strong><span>Current focus items</span></div>'+ '<div class="home-signal"><span class="home-signal-label">CAPTURES / LOCAL</span><strong>'+data.active.length+'</strong><span>Available active captures</span></div>'+ '<div class="home-signal"><span class="home-signal-label">PLANNING / TODAY</span><strong>'+plannedToday+'</strong><span>Owner-planned items today</span></div></section>'+
  '<section class="panel home-focus"><div class="panel-head"><h2>Focus for today</h2><button type="button" class="text-button" data-go="today">Manage focus</button></div>'+
  (data.focused.length?data.focused.map(todayFocusCard).join(''):'<p class="muted">No focus selected. Choose up to three of your existing local captures in Today.</p>')+
  '<p class="tiny muted">This workspace shows your selected focus. Check the footer for private sync status. Focus is not task completion or verified scheduling.</p></section>'+
