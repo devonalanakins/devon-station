@@ -57,8 +57,8 @@ const {join}=require('node:path');
    await page.screenshot({path:join(__dirname,'today-'+width+'.png'),fullPage:true});
    await page.locator('#nav [data-go=home]').click();
    await page.locator('.home-focus').getByText('Retain original capture '+width).waitFor();
-   const focusSignal=(await page.locator('.home-signal-grid .home-signal').first().locator('strong').textContent()).replace(/\\s+/g,' ').trim();
-   if(!/^1\\s*\\/\\s*3$/.test(focusSignal))throw Error('focus signal is not derived from owner-selected local state '+width+': '+focusSignal);
+   const focusSignal=(await page.locator('.home-signal-grid .home-signal').first().locator('strong').textContent()).replaceAll(' ','').trim();
+   if(focusSignal!=='1/3')throw Error('focus signal is not derived from owner-selected local state '+width+': '+focusSignal);
    if(width<=390){
     await page.getByRole('button',{name:'More sections'}).click();
     await page.locator('#palette[open]').waitFor();
