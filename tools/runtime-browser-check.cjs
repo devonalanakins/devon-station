@@ -10,6 +10,7 @@ const {join}=require('node:path');
   for(const width of [1440,390,320]){
    const context=await browser.newContext({viewport:{width,height:900},isMobile:width<500,hasTouch:width<500,acceptDownloads:true,extraHTTPHeaders:{'Cf-Access-Jwt-Assertion':token()},reducedMotion:'reduce'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(server.url+'/');await page.locator('.home-hero').waitFor();
+   if(await page.locator('.home-signal-grid .home-signal').count()!==3)throw Error('owner command center missing genuine local signals '+width);
    await page.addScriptTag({content:require('axe-core').source});
    const homeA11y=await page.evaluate(async()=>(
     await axe.run(document.querySelector('#view'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa']}})
@@ -56,6 +57,8 @@ const {join}=require('node:path');
    await page.screenshot({path:join(__dirname,'today-'+width+'.png'),fullPage:true});
    await page.locator('#nav [data-go=home]').click();
    await page.locator('.home-focus').getByText('Retain original capture '+width).waitFor();
+   const focusSignal=(await page.locator('.home-signal-grid .home-signal').first().locator('strong').textContent()).replace(/\\s+/g,' ').trim();
+   if(!/^1\\s*\\/\\s*3$/.test(focusSignal))throw Error('focus signal is not derived from owner-selected local state '+width+': '+focusSignal);
    if(width<=390){
     await page.getByRole('button',{name:'More sections'}).click();
     await page.locator('#palette[open]').waitFor();
