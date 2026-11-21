@@ -322,3 +322,13 @@ body[data-motion=reduced] .monogram:hover,body[data-motion=reduced] .area-tile:h
 }
 @media(max-width:350px){.page-home .home-signal-grid{grid-template-columns:1fr}.page-home .home-signal{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}}
 @media(prefers-reduced-motion:reduce){.page-home .home-orbital-field{animation:none}}
+
+/* Legible iPhone signal cards without forcing three narrow text columns. */
+@media(max-width:540px){
+ .page-home .home-signal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .page-home .home-signal:last-child{grid-column:1/-1}
+ .page-home .home-signal-label{font-size:10px;letter-spacing:.06em}
+ .page-home .home-signal>span:last-child{font-size:11px}
+ .page-home .home-hero-footer{font-size:11px}
+}
+@media(max-width:350px){.page-home .home-signal-grid{grid-template-columns:1fr}}
