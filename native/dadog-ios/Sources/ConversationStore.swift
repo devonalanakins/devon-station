@@ -60,7 +60,7 @@ struct LocalConversationStorage: ConversationStorage {
     private func commit(_ next: [Conversation]) -> Bool {
         guard canWrite else { return false }
         do { try storage.save(next); conversations = next; error = nil; return true }
-        catch { self.error = "Could not save. Your changes are still in the editor; try again."; return false }
+        catch { self.error = "Could not save the change. Please try again."; return false }
     }
 
     func create() -> UUID? {
@@ -81,4 +81,3 @@ struct LocalConversationStorage: ConversationStorage {
     }
     func delete(_ id: UUID) -> Bool { commit(conversations.filter { $0.id != id }) }
 }
-
