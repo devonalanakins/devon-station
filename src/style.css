@@ -262,3 +262,63 @@ body[data-motion=reduced] .monogram:hover,body[data-motion=reduced] .area-tile:h
 .noise-filter-choice{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .noise-filter-choice select{width:auto;max-width:160px;min-height:44px}
 @media(max-width:540px){.noise-filter-choice{width:100%;justify-content:space-between}.noise-filter-choice select{flex:1;max-width:190px}}
+
+
+/* DS011: owner command-center presentation. Source-backed, no simulated metrics. */
+.page-home{background:radial-gradient(ellipse 68% 35% at 85% -7%,#125e5930,transparent 75%)}
+.page-home .page-heading h1{font-weight:640;letter-spacing:-.05em}
+.page-home .page-heading p{max-width:54ch;line-height:1.6}
+.page-home .home-layout{grid-template-columns:minmax(0,1.08fr) minmax(290px,.92fr);gap:16px}
+.page-home .home-hero{
+ position:relative;isolation:isolate;overflow:hidden;min-height:245px;
+ background:radial-gradient(ellipse 65% 100% at 93% 75%,#166e6464,transparent 72%),
+ radial-gradient(ellipse at 80% 3%,#278c8940,transparent 58%),
+ linear-gradient(115deg,#102827 0%,#0b2022 52%,#091e28 100%);
+ border:1px solid #4d918b66;border-radius:24px;
+ box-shadow:inset 0 1px #bcffff28,0 20px 60px #0005;
+ padding:clamp(24px,4vw,42px)
+}
+.page-home .home-hero::after{
+ content:"";position:absolute;right:-12%;bottom:-100px;width:65%;height:240px;
+ border-radius:50%;background:radial-gradient(ellipse at center,#51e9d91c,#0d5e6342 45%,#06161e 70%);
+ border-top:1px solid #83ffef6e;transform:rotate(-14deg);pointer-events:none;z-index:0
+}
+.page-home .home-hero>.eyebrow,.page-home .home-hero>h2,.page-home .home-hero>p,
+.page-home .home-hero>.button-row{position:relative;z-index:2}
+.page-home .home-hero .eyebrow{color:#9dfbe7}
+.page-home .home-hero h2{font-size:clamp(34px,4.2vw,52px);margin:12px 0;max-width:14ch;font-weight:640;letter-spacing:-.06em;color:#f4ffff}
+.page-home .home-hero>p:not(.home-hero-footer){max-width:65ch;color:#d1e5e5;font-size:13px;line-height:1.75}
+.page-home .home-hero-footer{font-size:10px;color:#9ebfbc;margin-top:16px!important;display:flex;gap:10px;align-items:center}
+.page-home .home-hero-spark{display:inline-block;width:6px;height:6px;background:#5be9cd;border-radius:50%;box-shadow:0 0 12px #5be9cd}
+.page-home .home-orbital-field{position:absolute;right:4%;top:-30px;width:310px;height:260px;opacity:.78;pointer-events:none;z-index:0}
+.page-home .home-orbital-ring{position:absolute;right:-28px;top:26px;width:270px;height:135px;transform:rotate(-23deg);border:1.5px solid #7cffe8be;border-left:2px solid #73eecf;border-radius:50%;box-shadow:inset 0 -2px 9px #45edc718,0 0 20px #2afcc41c}
+.page-home .home-orbital-node{position:absolute;right:12px;top:42px;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#ffffff,#8bffe6 52%,#35b7ae);box-shadow:0 0 16px #8bffe6bb}
+.page-home .home-actions button{border-radius:12px}
+.page-home .home-signal-grid{display:grid;grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.page-home .home-signal{min-width:0;padding:18px 19px;display:flex;flex-direction:column;gap:7px;
+ border:1px solid #37645b8a;border-radius:16px;background:linear-gradient(140deg,#122b2ad9,#0c1a23ef);
+ box-shadow:inset 0 1px #baffeb15}
+.page-home .home-signal-label{font-size:9px;letter-spacing:.14em;font-weight:720;color:#a8e7d7}
+.page-home .home-signal strong{font-size:clamp(25px,3vw,36px);line-height:1;letter-spacing:-.04em;font-weight:660;color:#f3fffa;font-variant-numeric:tabular-nums}
+.page-home .home-signal strong small{font-size:13px;color:#88b4aa;font-weight:450}
+.page-home .home-signal>span:last-child{color:#a5b8bb;font-size:11px}
+.page-home .home-focus,.page-home .home-sources{background:linear-gradient(145deg,#101f24e8,#101923f0);border-color:#34595299;border-radius:19px}
+.page-home .home-focus .panel-head h2,.page-home .home-sources h2{font-size:15px;font-weight:690}
+.page-home .today-focus-card{border-bottom-color:#37605a66}
+.page-home .today-focus-card strong{font-weight:640}
+.page-home .home-sources .he-source{border-radius:13px}
+@media(max-width:920px){.page-home .home-layout{grid-template-columns:1fr}}
+@media(max-width:540px){
+ .page-home .home-hero{padding:24px 20px;min-height:280px;border-radius:20px}
+ .page-home .home-hero h2{font-size:35px}
+ .page-home .home-orbital-field{right:-96px;top:4px;opacity:.36;transform:scale(.75)}
+ .page-home .home-hero>p:not(.home-hero-footer){max-width:36ch;font-size:12px}
+ .page-home .home-signal-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .page-home .home-signal{padding:13px 9px;border-radius:12px;gap:8px}
+ .page-home .home-signal-label{font-size:8px;letter-spacing:.045em;line-height:1.25}
+ .page-home .home-signal strong{font-size:26px}
+ .page-home .home-signal strong small{font-size:11px}
+ .page-home .home-signal>span:last-child{font-size:9px;line-height:1.4}
+}
+@media(max-width:350px){.page-home .home-signal-grid{grid-template-columns:1fr}.page-home .home-signal{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}}
+@media(prefers-reduced-motion:reduce){.page-home .home-orbital-field{animation:none}}
