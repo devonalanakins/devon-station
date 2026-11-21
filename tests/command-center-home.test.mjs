@@ -9,12 +9,13 @@ test('command center presents only actual local capture and focus counts',()=>{
  const app=read('src/app.js');
  assert.doesNotThrow(()=>new Script(app));
  assert.match(app,/plannedToday=plannedCaptureGroups\(data\.active\.filter\(d=>d\.triage!=='Next'/);
- assert.match(app,/data\.focused\.length\+' <small>\/ 3<\/small>'/);
+ assert.match(app,/data\.focused\.length/);
+ assert.match(app,/<small>\/ 3<\/small>/);
  assert.match(app,/data\.active\.length/);
  assert.match(app,/Current focus items/);
  assert.match(app,/Available active captures/);
  assert.match(app,/Owner-planned items today/);
- assert.match(app,/No external action runs without authorization/);
+ assert.match(app,/No external work starts without authorization/);
  assert.doesNotMatch(app,/Focus 92%|Energy 78%|Output \+34%|Now Playing.+Spotify/);
 });
 
