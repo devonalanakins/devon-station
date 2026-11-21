@@ -1,5 +1,5 @@
 import {workspaceScopes,readWorkspace,mutateWorkspace,reviewWorkspaceSources,reconcileWorkspaceSources,exportWorkspace,reviewWorkspaceRestore,restoreWorkspace} from './workspace.mjs';
-import {authorizedIdentity} from './access.mjs';
+import {authorizedIdentity,resolveOwnerIdentity} from './access.mjs';
 import {validEndpoint,deviceId,endpointHash,sendGenericPush,PushDispatchError,safePushServiceFailure} from './notifications.mjs';
 import {getOwnerState,saveOwnerState} from './state.mjs';
 import {getCachedPortfolio,refreshPortfolio} from './portfolio.mjs';
@@ -41,8 +41,9 @@ async function readBody(request,limit=8192){
 export function createStation(assets,auth=authorizedIdentity,transport=fetch,imapSocket=null){return {async fetch(request,env,ctx){try{
  const url=new URL(request.url);if(url.origin!==env.APP_ORIGIN)return json({error:'wrong_origin'},403);
  const publicScript=publicServiceWorker(request,env,url,assets);if(publicScript)return publicScript;
- let user;try{user=await auth(request,env,ctx)}catch{return json({error:'owner_sign_in_required'},401)}
- if(user?.email!==env.OWNER_EMAIL||!user.subject)return json({error:'owner_only'},403);
+ let authenticated;try{authenticated=await auth(request,env,ctx)}catch{return json({error:'owner_sign_in_required'},401)}
+ const user=resolveOwnerIdentity(authenticated,env);
+ if(!user)return json({error:'owner_only'},403);
  if(!['GET','HEAD','POST','DELETE'].includes(request.method))return json({error:'method_not_allowed'},405);
  const writes=['POST','DELETE'].includes(request.method);if(writes&&(request.headers.get('Origin')!==url.origin||request.headers.get('Content-Type')?.split(';')[0]!=='application/json'))return json({error:'same_origin_json_required'},403);
  if(url.pathname.startsWith('/api/ai-work/'))return json(await handleAiWorkApi({request,url,user,env,readBody}));
