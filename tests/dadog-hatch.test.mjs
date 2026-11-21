@@ -34,6 +34,7 @@ test('Dadog reuses existing Today and Capture actions and does not invent cloud 
  assert.doesNotMatch(source,/fetch\s*\(|XMLHttpRequest|WebSocket|localStorage|navigator\.mediaDevices|new Audio|setInterval/);
  assert.match(app,/if\('dadogToggle' in d\)/);
  assert.match(app,/panel\.dataset\.dadogState=awake\?'awake':'resting'/);
+ assert.match(app,/setAttribute\('aria-label',awake\?/);
 });
 
 test('Dadog preserves reduced motion and mobile constraints',()=>{
