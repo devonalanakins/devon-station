@@ -58,7 +58,7 @@ function todayFocusCard(d){
  return '<article class="today-focus-card"><strong>'+esc(d.title)+'</strong><span>'+esc(d.area)+(d.planDate?' · Planned '+esc(planDayLabel(d.planDate)):' · No date set')+' · Owner capture</span></article>';
 }
 function home(){
- const data=todayCaptures(local),plannedToday=data.active.filter(d=>d.planDate===localDay()).length;
+ const data=todayCaptures(local),focusedIds=new Set(data.focused.map(d=>d.id)),plannedToday=plannedCaptureGroups(data.active.filter(d=>d.triage!=='Next'||focusedIds.has(d.id)),localDay()).today.length;
  return heading('Your personal operating space.','Choose one useful action. Keep every source and permission boundary intact.',tag('Owner first'))+
  '<div class="home-layout"><section class="panel home-hero"><div class="home-orbital-field" aria-hidden="true"><span class="home-orbital-ring"></span><span class="home-orbital-node"></span></div><span class="eyebrow">DEVONSTATION / PRIVATE COMMAND CENTER</span>'+
  '<h2>What matters next?</h2><p>Focus. Create. Research. Ship. Capture a responsibility, choose your next priority, or inspect source-backed work. No external action runs without authorization.</p>'+
