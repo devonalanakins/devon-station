@@ -1,16 +1,22 @@
 <p align="center"><img src=".github/assets/readme-hero.svg" alt="Original DevonStation project banner" width="100%" /></p>
 
-# DevonStation
+# Dadog
 
 > **Repository status · November 3, 2026:** The default `main` branch remains a public-safe recovery/documentation landing page. The integrated application and Communications are source-verified on draft review branches, not merged or proven live. Review [the development PRs](https://github.com/devonalanakins/devon-station/pulls) before treating any feature as released.
 
-DevonStation is an independent personal workspace, separate from the Anevum creative studio. Private notes, credentials and operational snapshots are never part of the public repository.
+Dadog (formerly DevonStation) is an independent personal workspace, separate from the Anevum creative studio. Private notes, credentials and operational snapshots are never part of the public repository.
 
-DevonStation is Devon Akins's personal operating workspace: source-linked projects, scoped proposals and decisions, durable receipts, private capture and encrypted portable recovery. Original software and the original DS icon are licensed under **GNU AGPL version 3 only**. See [LICENSE](LICENSE).
+Dadog is Devon Akins's personal operating workspace: source-linked projects, scoped proposals and decisions, durable receipts, private capture and encrypted portable recovery. Original software and the original DS icon are licensed under **GNU AGPL version 3 only**. See [LICENSE](LICENSE).
+
+## Dadog Core: scope and actual state
+
+The owner-approved public product name is **Dadog**. The GitHub repository and development identifiers retain their original `devon-station` paths until a separate dependency, signed-identity and redirect review. The existing application, owner records and guarded release workflow are preserved.
+
+The Dadog Core source module currently **presents only the owner's existing selected focus**. It does not connect to an AI model, synchronize ChatGPT's private Dadog Core skill, retrieve personal memories, or authorize actions. Work, source evidence, personal capture and Knowledge keep separate access/approval boundaries. See [Dadog Core cutover contract](docs/DADOG-CORE-CUTOVER-2026-11-21.md) for exact implementation and future gates.
 
 ## Development status
 
-The unified recovered application is now present in the review branch, including frontend, build tools and approved replacement PWA artwork. It is a tested development candidate, not an accepted production cutover. The recovered authentication implementation and legacy recovery history remain preserved. [Draft PR #8](https://github.com/anevum/devon-station/pull/8) contains the combined review.
+The unified recovered application is now present in the review branch, including frontend, build tools and approved replacement PWA artwork. It is a tested development candidate, not an accepted production cutover. The recovered authentication implementation and legacy recovery history remain preserved. [Draft PR #65](https://github.com/devonalanakins/devon-station/pull/65) contains the latest owner sign-in and command center review base; Dadog changes remain a separate source-only continuation until reviewed.
 
 Use fabricated records for development. Each subject/principal/scope and project grant is supplied by trusted server configuration. Approving an action records a decision; the journal has no external dispatcher. Client-encrypted recovery requires explicit review and an empty authorized target. Source changes retain action/receipt history; removing projects with history requires a separate retention policy.
 
