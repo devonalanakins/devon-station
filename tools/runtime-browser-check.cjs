@@ -17,6 +17,20 @@ const {join}=require('node:path');
    ).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})));
    if(homeA11y.length)throw Error('Home accessibility at '+width+': '+JSON.stringify(homeA11y));
    await page.screenshot({path:join(__dirname,'home-'+width+'.png'),fullPage:true});
+   // The rest of the first-party command center must be discoverable and
+   // accessible without silently creating a second data storage layer.
+   for(const route of ['studio','knowledge','library','approvals']){
+    await page.goto(server.url+'/#'+route);
+    await page.locator('.orbital-route-layout').waitFor();
+    const sectionWidth=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    if(sectionWidth>1)throw Error('orbital route horizontal overflow '+route+' '+width+': '+sectionWidth);
+    await page.addScriptTag({content:require('axe-core').source});
+    const violations=await page.evaluate(async()=>(
+     await axe.run(document.querySelector('#view'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa']}})
+    ).violations.map(v=>v.id));
+    if(violations.length)throw Error('orbital route accessibility '+route+' '+width+': '+JSON.stringify(violations));
+    await page.screenshot({path:join(__dirname,'orbital-'+route+'-'+width+'.png'),fullPage:true});
+   }
    await page.goto(server.url+'/#workspace');await page.getByText('Workspace loaded. Saved decisions are up to date.').waitFor();
    await page.getByLabel('Action to review').fill('Synthetic browser action '+width);await page.getByRole('button',{name:'Create proposal',exact:true}).click();await page.getByText('Proposal saved. Review it before deciding.').waitFor();
    const article=page.locator('.ws-action').filter({hasText:'Synthetic browser action '+width});await article.getByRole('button',{name:'Review proposal'}).click();
