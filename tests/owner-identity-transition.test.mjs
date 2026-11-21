@@ -17,6 +17,15 @@ test('default identity remains the existing owner with no alias configured',()=>
  assert.equal(resolveOwnerIdentity(newUser,{OWNER_EMAIL:cfg.OWNER_EMAIL}),null);
 });
 
+test('a production owner email already updated to current can still preserve historical storage subject',()=>{
+ const updated={...cfg,OWNER_EMAIL:newUser.email};
+ assert.deepEqual(resolveOwnerIdentity(newUser,updated),{subject:oldUser.subject,email:newUser.email});
+ assert.equal(resolveOwnerIdentity(oldUser,updated),null,'retired login must not be reopened by alias');
+ assert.deepEqual(resolveOwnerIdentity(newUser,{...updated,OWNER_ALIAS_ENABLED:'false'}),newUser,
+   'with alias disabled existing production sign-in retains current subject');
+ assert.equal(resolveOwnerIdentity({...newUser,subject:oldUser.subject},updated),null);
+});
+
 test('transition maps only a verified exact new Access identity back to existing storage subject',()=>{
  assert.deepEqual(resolveOwnerIdentity(newUser,cfg),{subject:oldUser.subject,email:newUser.email});
  assert.deepEqual(resolveOwnerIdentity(oldUser,cfg),oldUser);
