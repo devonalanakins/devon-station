@@ -1,5 +1,5 @@
 /*
- * DS011-COMMS-19: paste into the DevTools Console on the authenticated DevonStation
+ * DS011-COMMS-19: paste into the DevTools Console on the authenticated Dadog
  * application (NOT the Cloudflare Access sign-in page or a file preview).
  * Read-only. No passwords, message text, tokens, or headers are printed.
  */
@@ -10,15 +10,15 @@
   const report = (stage, result, detail) => console.info('DS-MAIL-ACCEPTANCE', {stage, result, detail});
 
   if (location.origin !== ORIGIN) {
-    report('preflight', 'WRONG_ORIGIN', 'Open the authenticated DevonStation tab at ds.devonakins.com.');
+    report('preflight', 'WRONG_ORIGIN', 'Open the authenticated Dadog tab at ds.devonakins.com.');
     return;
   }
   if (window.top !== window.self) {
-    report('preflight', 'WRONG_FRAME', 'Select the top-level DevonStation page in the Console context menu.');
+    report('preflight', 'WRONG_FRAME', 'Select the top-level Dadog page in the Console context menu.');
     return;
   }
-  if (document.title !== 'Devon Station' || !document.querySelector('.app main#view')) {
-    report('preflight', 'NOT_APP', 'Cloudflare Access sign-in or another page is displayed. Finish sign-in until the DevonStation workspace appears, then rerun.');
+  if (!['Dadog','DevonStation','Devon Station'].includes(document.title) || !document.querySelector('.app main#view')) {
+    report('preflight', 'NOT_APP', 'Cloudflare Access sign-in or another page is displayed. Finish sign-in until the Dadog workspace appears, then rerun.');
     return;
   }
   const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');

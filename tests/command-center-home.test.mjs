@@ -30,3 +30,14 @@ test('orbital home retains real actions, source evidence and mobile accessibilit
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(css,/home-signal-grid/);
 });
+
+test('Dadog Core presents only owner-selected focus with an explicit no-execution boundary',()=>{
+ const app=read('src/app.js'),css=read('src/style.css'),builder=read('tools/build-hosted-shell.mjs');
+ assert.match(app,/dadogCoreSnapshot\(data\.focused\)/);
+ assert.match(app,/Dadog Core selected next action/);
+ assert.match(app,/core\.nextAction\?\.title/);
+ assert.match(app,/Dadog does not invent tasks/);
+ assert.match(app,/Model inference, private Knowledge access and autonomous execution are not connected/);
+ assert.match(css,/\.page-home \.home-core/);
+ assert.match(builder,/src\/dadog-core\.mjs/);
+});

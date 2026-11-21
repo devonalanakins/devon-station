@@ -25,10 +25,10 @@ test('identity candidate remains a source-only, reviewable vector asset',()=>{
 
 test('in-app mark is accessible, consistent and introduces no external asset dependency',()=>{
  const html=source('src/index.html');
- assert.match(html,/aria-label="DevonStation home"/);
+ assert.match(html,/aria-label="Dadog home"/);
  assert.match(html,/viewBox="0 0 512 512" aria-hidden="true"/);
  assert.match(html,/id="ds-signal"/);
- assert.match(html,/<title>DevonStation<\/title>/);
+ assert.match(html,/<title>Dadog<\/title>/);
  assert.match(html,/href="#view">Skip to workspace/);
  const policy=html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/)?.[1];
  assert.ok(policy);
@@ -40,8 +40,8 @@ test('in-app mark is accessible, consistent and introduces no external asset dep
 
 test('PWA naming and theme are consistent while raster icons remain separately gated',()=>{
  const manifest=JSON.parse(source('pwa/manifest.webmanifest'));
- assert.equal(manifest.name,'DevonStation');
- assert.equal(manifest.short_name,'DevonStation');
+ assert.equal(manifest.name,'Dadog');
+ assert.equal(manifest.short_name,'Dadog');
  assert.equal(manifest.theme_color,'#070c17');
  assert.equal(manifest.background_color,'#070c17');
  assert.equal(manifest.display,'standalone');
@@ -70,7 +70,7 @@ test('shared visual layer preserves responsive focus and reduced-motion contract
 
 test('canonical naming does not disable the existing owner mail safety flow',()=>{
  const mail=source('src/mail-ui.js');
- assert.match(mail,/\['Devon Station','DevonStation'\]\.includes\(document\.title\)/);
+ assert.match(mail,/\['Dadog','Devon Station','DevonStation'\]\.includes\(document\.title\)/);
  assert.match(mail,/window\.top!==window\.self/);
  assert.match(mail,/document\.querySelector\('\.app main#view'\)/);
  assert.match(mail,/document\.getElementById\('station-mail'\)/);

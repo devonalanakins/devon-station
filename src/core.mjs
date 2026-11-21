@@ -42,11 +42,11 @@ export function calendarFileForCapture(draft,stamp=new Date()){
  const next=new Date(Date.UTC(year,month-1,day+1)).toISOString().slice(0,10);
  const noDashes=value=>value.replaceAll('-','');
  const stampUTC=stamp.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
- const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//DevonStation//Owner Planning Export//EN',
+ const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Dadog//Owner Planning Export//EN',
   'CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+draft.id.slice(6).toLowerCase()+'@devonstation.local',
   'DTSTAMP:'+stampUTC,'DTSTART;VALUE=DATE:'+noDashes(date),'DTEND;VALUE=DATE:'+noDashes(next),
   'SUMMARY:'+escICS(safe.title),
-  'DESCRIPTION:Owner planning reminder exported manually from DevonStation. Import into your calendar to save it there; no connection or confirmed appointment is implied.',
+  'DESCRIPTION:Owner planning reminder exported manually from Dadog. Import into your calendar to save it there; no connection or confirmed appointment is implied.',
   'STATUS:TENTATIVE','TRANSP:TRANSPARENT','END:VEVENT','END:VCALENDAR'];
  const encoder=new TextEncoder();
  const fold=line=>{
