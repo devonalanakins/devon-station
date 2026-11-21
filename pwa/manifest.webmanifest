@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "DevonStation",
-  "short_name": "DevonStation",
-  "description": "Private, owner-controlled personal operating workspace",
+  "name": "Dadog",
+  "short_name": "Dadog",
+  "description": "Dadog — private, owner-controlled personal operating workspace",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
