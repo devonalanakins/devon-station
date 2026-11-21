@@ -1,4 +1,5 @@
 import {Script} from 'node:vm';
+import {renderOrbitalIcon} from '../tools/render-orbital-icon.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';
 test('hosted packaging removes private inventory, has no embedded private source URLs, and contains all API modules',()=>{
  execFileSync(process.execPath,['tools/build-hosted-shell.mjs']);execFileSync(process.execPath,['tools/build-worker.mjs','--shell']);
@@ -26,7 +27,7 @@ test('hosted packaging removes private inventory, has no embedded private source
  assert.match(bundle['index.mjs'],/^import \{connect\} from 'cloudflare:sockets';/);
  const assets=JSON.parse(bundle['index.mjs'].match(/const assets=(.*);\nexport default/s)[1]);
  for(const [name,size] of [['icon-192.png',192],['icon-512.png',512],['apple-touch-icon.png',180]]){
-  const encoded=assets['/icons/'+name];assert.equal(encoded.type,'image/png');const bytes=Buffer.from(encoded.body,'base64');assert.equal(bytes.readUInt32BE(16),size);assert.equal(bytes.readUInt32BE(20),size);assert.deepEqual(bytes,readFileSync('pwa/icons/'+name));
+  const encoded=assets['/icons/'+name];assert.equal(encoded.type,'image/png');const bytes=Buffer.from(encoded.body,'base64');assert.equal(bytes.readUInt32BE(16),size);assert.equal(bytes.readUInt32BE(20),size);assert.deepEqual(bytes,renderOrbitalIcon(size),'deployable icon must be generated from the checked-in renderer');
  }
  assert.equal(assets['/LICENSE.txt'].body,readFileSync('LICENSE','utf8'));assert(src.includes('License and source'));
  const manifest=JSON.parse(assets['/manifest.webmanifest'].body);assert.equal(manifest.icons.length,2);assert(src.includes('rel="apple-touch-icon"'));
