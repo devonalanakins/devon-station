@@ -264,8 +264,8 @@
   }
   async function diagnose(){
     if(state.diagnostic.phase==='running')return;
-    diagnostic('running','Checking the active DevonStation owner session…');
-    // An Access sign-in document is not the DevonStation application. Do not probe APIs
+    diagnostic('running','Checking the active Dadog owner session…');
+    // An Access sign-in document is not the Dadog application. Do not probe APIs
     // from a foreign origin, embedded frame, sign-in document, or restrictive page CSP.
     const meta=document.querySelector('meta[http-equiv="Content-Security-Policy"]');
     const connect=meta?.getAttribute('content')?.split(';').map(x=>x.trim()).find(x=>x.startsWith('connect-src '));
@@ -274,9 +274,9 @@
     const securePage=location.protocol==='https:'||
       (location.protocol==='http:'&&['127.0.0.1','localhost'].includes(location.hostname));
     if(!securePage||window.top!==window.self||
-       !['Devon Station','DevonStation'].includes(document.title)||!document.querySelector('.app main#view')||
+       !['Dadog','Devon Station','DevonStation'].includes(document.title)||!document.querySelector('.app main#view')||
        !document.getElementById('station-mail')){
-      diagnostic('blocked','Open the signed-in DevonStation workspace, not the Cloudflare Access sign-in page.');return;
+      diagnostic('blocked','Open the signed-in Dadog workspace, not the Cloudflare Access sign-in page.');return;
     }
     if(!connect||!connect.split(/\s+/).includes("'self'")){
       diagnostic('blocked','The running page policy does not permit same-origin checks. No request was attempted.');return;
@@ -295,7 +295,7 @@
     }
     function failure(stage,result){
       const reason=result.kind==='network'?'The browser blocked the request or the connection failed. Check the active page policy and network; provider credentials were not tested.':
-        result.kind==='sign_in'||result.kind==='not_json'?'Cloudflare Access sign-in or an expired owner session was detected. Sign in to DevonStation and try again.':
+        result.kind==='sign_in'||result.kind==='not_json'?'Cloudflare Access sign-in or an expired owner session was detected. Sign in to Dadog and try again.':
         'The '+stage+' endpoint did not return a valid authorized response. No mailbox changes were made.';
       diagnostic('blocked',reason);return;
     }
