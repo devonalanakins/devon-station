@@ -1,0 +1,25 @@
+name: Verify Dadog iPhone
+on:
+  pull_request:
+    paths:
+      - 'native/dadog-ios/**'
+      - '.github/workflows/dadog-ios-verify.yml'
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        working-directory: native/dadog-ios
+        run: xcodegen generate
+      - name: Build and run tests
+        working-directory: native/dadog-ios
+        run: |
+          set -eo pipefail
+          xcodebuild -version
+          xcodebuild -project Dadog.xcodeproj -scheme Dadog -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' CODE_SIGNING_ALLOWED=NO test
