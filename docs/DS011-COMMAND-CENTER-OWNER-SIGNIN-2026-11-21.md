@@ -13,6 +13,10 @@ Status: SOURCE-ONLY CANDIDATE. This document does not authorize production relea
 
 Cloudflare Access can issue different signed subject IDs for different email addresses belonging to the same human. DevonStation's owner records and Work/Mail/Workspace gates use the **original signed owner subject**. Changing just `OWNER_EMAIL` to another address loses continuity and can make old records appear absent.
 
+### Current production configuration observed November 21, 2026
+
+A read-only provider check found a new production deployment at **2026-11-21 13:09:50 UTC**, created before this branch, with a version annotation indicating an owner-email correction. `OWNER_EMAIL` already names the current identity, but `MAIL_OWNER_SUB` still identifies the historical Access subject. The alias feature flag is absent. The current identity should pass the Worker's email gate, but access to historical subject-scoped features such as Mail cannot be inferred from that alone. This PR must not overwrite or roll back that live correction. Neither actual iPhone sign-in nor old/new owner record parity has been accepted.
+
 The Worker now has a fail-closed optional mapping in `worker/index.mjs`. It is disabled unless all four of these additional bindings are set intentionally:
 
 | Binding | Meaning |
@@ -22,7 +26,7 @@ The Worker now has a fail-closed optional mapping in `worker/index.mjs`. It is d
 | `OWNER_CURRENT_EMAIL` | Current owner email, exact address validated against Access |
 | `OWNER_CURRENT_SUB` | Current owner subject, exact ID validated against Access |
 
-**Do not change existing `OWNER_EMAIL`, `MAIL_OWNER_SUB`, `ACCESS_AUD`, `ACCESS_ISSUER`, `ACCESS_JWKS_URL`, existing D1 bindings, or active Access app while first enabling the mapping.** Verify the new owner email is explicitly allowed by that same Access application first. The signed identity must match **both** the current email and its pinned current subject. On success, only the storage subject is resolved back to the existing owner subject. Do not trust email request headers, user-entered account names, or a self-asserted subject. The original signed owner is also pinned to its original subject while alias mode is active.
+**Do not change existing `OWNER_EMAIL`, `MAIL_OWNER_SUB`, `ACCESS_AUD`, `ACCESS_ISSUER`, `ACCESS_JWKS_URL`, existing D1 bindings, or active Access app while first enabling the mapping.** Verify the new owner email is explicitly allowed by that same Access application first. The signed identity must match **both** the current email and its pinned current subject. On success, only the storage subject is resolved back to the existing owner subject. When the existing `OWNER_EMAIL` is already the current address, the historic email remains denied. If `OWNER_EMAIL` still names the historical email during a separately authorized transition, the historical identity also requires its exact pinned legacy subject. Do not trust email request headers, user-entered account names, or a self-asserted subject. The original signed owner is also pinned to its original subject while alias mode is active.
 
 A user whose email is allowed by Cloudflare Access but is not also recognized by the Worker is still denied. The User ID/subject mapping is not an identity merge and does not transfer or duplicate records.
 
