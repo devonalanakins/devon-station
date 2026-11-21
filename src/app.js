@@ -34,7 +34,7 @@ function sourceHeader(url,label){return link(url,label)}
 function nav(){
  const el=$('#nav'),primary=['home','today','command','portfolio'];
  // Primary routes stay visible on iPhone; the others are available in the palette.
- const visible=[...primary,'aiwork','studio','mail','knowledge','library','approvals','settings'];
+ const visible=[...primary,'aiwork','studio','workspace','inbox','mail','knowledge','library','approvals','settings'];
  el.innerHTML=visible.map(s=>{const i=SECTIONS.indexOf(s);
   const title=labels[s],shortcut=i<10?' · Alt '+((i+1)%10):'';
   return '<button type="button" class="nav-item" data-go="'+s+'" data-primary="'+primary.includes(s)+'" '+(s===section?'aria-current="page" ':'')+'aria-label="'+title+'" title="'+title+shortcut+'">'+icon(s)+'<span>'+title+'</span></button>';
